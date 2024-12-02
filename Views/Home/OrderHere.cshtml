@@ -1,0 +1,256 @@
+﻿@{
+    ViewData["Title"] = "Order Here";
+}
+<style>
+    .container {
+        background-color: #fafafa;
+        background-size: cover;
+        background-position: center;
+        text-align: center;
+        border-radius: 10px;
+    }
+    .btn-pink {
+        background-color: #F6C4C3;
+        color: white;
+        border: none;
+        font-weight: bold;
+        box-shadow: 0 5px 10px #00000077;
+    }
+
+        .btn-pink:hover {
+            color: white;
+            background-color: #d6a4a3;
+        }
+
+    .text-pink {
+        color: white;
+    }
+
+    .image-container {
+        position: relative;
+        width: 100%;
+        height: 250px; /* Set consistent height */
+        overflow: hidden; /* Hide overflow for rounded top */
+        border-top-left-radius: 50%; /* Large arc */
+        border-top-right-radius: 50%; /* Large arc */
+       
+
+    }   
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures images fill the container without distortion */
+            
+        }
+
+       .product-card {
+        border-top-left-radius: 50%; /* Large arc */
+        border-top-right-radius: 50%; /* Large arc */
+        box-shadow: 0 1px 10px #00000077 !important;
+       }
+
+    /* Category Container Styling */
+    .category-container {
+        max-height: 150px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        background-color: #fff; /* White background for container */
+        box-shadow: 0 1px 10px #00000077 !important;
+    }
+
+    /* Button Styling */
+    .category-btn {
+        background-color: #fff; /* Default white background */
+        color: #5F4B8B; /* Pink text color */
+        border-radius: 30px; /* Rounded pill shape */
+        padding: 5px 8px;
+        font-weight: bold;
+        transition: all 0.1s ease; /* Smooth hover/active transition */
+    }
+
+        /* Hover and Active State */
+        .category-btn:hover,
+        .category-btn:focus,
+        .category-btn.active {
+            background-color: #F6C4C3;
+            outline: black !important;
+            box-shadow: none !important;
+            color: white;
+        }
+
+
+    .rating i { 
+        color: yellow;
+        font-size: 18px;
+        margin-right: 2px;
+    }
+
+    /* Container for pagination */
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    /* Styling for the pagination */
+    .pagination {
+        list-style: none;
+        display: flex;
+        gap: 10px;
+        padding: 0;
+        margin: 0;
+    }
+
+    /* Base styles for each pagination link */
+    .page-link {
+        padding: 8px 15px;
+        text-decoration: none;
+        background-color: #fff;
+        color: #5F4B8B;
+        font-weight: bold;
+        border-radius: 30px;
+        transition: all 0.2s ease-in-out;
+        border: 2px solid #5F4B8B;
+    }
+
+        /* Hover and active states */
+        .page-link:hover,
+        .page-link:focus {
+            background-color: #5F4B8B;
+             color: white;
+            outline: none;
+            border-color: #5F4B8B;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Active page style */
+        .page-link.active {
+            background-color: #F6C4C3;
+            color: white;
+            border-color: #F6C4C3;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+    /* Disable previous/next buttons */
+    .pagination li.disabled .page-link {
+        color: #ccc;
+        pointer-events: none;
+        border-color: #ccc;
+    }
+
+        .pagination li.disabled .page-link:hover {
+            background-color: #fff;
+            color: #ccc;
+            border-color: #ccc;
+        }
+
+
+
+</style>
+<div class="container">
+    <!-- Title -->
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-4 justify-content-center align-items-center">
+        <!-- Categories Section -->
+        <div class="col-12">
+            <div class="d-flex flex-wrap justify-content-center gap-3 overflow-auto category-container">
+                <button class="btn category-btn">All Categories</button>
+                <button class="btn category-btn">Flowers</button>
+                <button class="btn category-btn">Bouquets</button>
+                <button class="btn category-btn">Special Arrangements</button>
+                <button class="btn category-btn">Roses</button>
+                <button class="btn category-btn">Tulips</button>
+                <button class="btn category-btn">Sunflowers</button>
+                <button class="btn category-btn">Orchids</button>
+                <button class="btn category-btn">Daisies</button>
+                <button class="btn category-btn">Carnations</button>
+                <button class="btn category-btn">Lilies</button>
+                <button class="btn category-btn">Custom Bouquets</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="row g-4" id="productList">
+        <!-- Product Cards -->
+        @* Example Products; Replace with dynamic data *@
+        <div class="col-lg-3 col-md-6">
+            <div class="card shadow-sm border-0 product-card">
+                <div class="image-container">
+                    <!--<img src="https://i.pinimg.com/736x/e0/7e/d3/e07ed390935af4f78b8aa2787a1cc36c.jpg" class="card-img-top" alt="Sunflower Bouquet"> -->
+                    <model-viewer style="width: 100%; height: 100%; object-fit: contain;" src="/models/papa_meilland_rose.glb" alt="3D Product" class="card-img-top" auto-rotate camera-controls background-color="#FFFFFF"></model-viewer>
+                </div>
+                <div class="card-body text-center">
+                    <h5 class="card-title fw-bold">Sunflower Bouquet</h5>
+                    <!-- Rating -->
+                    <div class="rating mb-2">
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="far fa-star text-warning"></i>
+                    </div>
+                    <p class="card-text">₱25</p>
+                    <a asp-area="" asp-controller="Home" asp-action="ProductView" class="btn btn-pink w-100 rounded-pill">Order Now</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card shadow-sm border-0 product-card">
+                <div class="image-container">
+                    <img src="https://www.floraprima.de/media/cache/ZmFydGlrZWwvMzU2MjkvREU5OTAxNDVfYXJ0aWtlbGJpbGRfY3hfZWpwZ19jeF93NjAwX2N4X2g2MDBfY3hfYV9jeF9tMTY2NjY5MDcxMl9jeF9kZQ==/it50-flower-bouquet-von-herzen.jpg" class="card-img-top" alt="Tulip Bouquet">
+                </div>
+                <div class="card-body text-center">
+                    <h5 class="card-title fw-bold">Tulip Bouquet</h5>
+                    <!-- Rating -->
+                    <div class="rating mb-2">
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="far fa-star text-warning"></i>
+                        <i class="far fa-star text-warning"></i>
+                    </div>
+                    <p class="card-text">₱30</p>
+                    <a asp-area="" asp-controller="Home" asp-action="ProductView" class="btn btn-pink w-100 rounded-pill">Order Now</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+
+    <!-- Pagination -->
+    <nav aria-label="Product Pagination" class="mt-5">
+        <div class="pagination-container">
+            <ul class="pagination">
+                <li><a href="#" class="page-link">«</a></li>
+                <li><a href="#" class="page-link">1</a></li>
+                <li><a href="#" class="page-link">2</a></li>
+                <li><a href="#" class="page-link">3</a></li>
+                <li><a href="#" class="page-link">4</a></li>
+                <li><a href="#" class="page-link">»</a></li>
+            </ul>
+        </div>
+
+    </nav>
+</div>
+
+
+@section Scripts {
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+    <script>
+        function applyFilters() {
+            const searchText = document.getElementById('searchBox').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+
+            console.log(`Search: ${searchText}, Category: ${category}`);
+        }
+    </script>
+}

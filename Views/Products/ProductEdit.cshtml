@@ -1,0 +1,934 @@
+﻿@model IEnumerable<PetalOrSomething.Models.Product>
+<style>
+
+    #myCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: block;
+        width: 100%;
+        height: calc(100% - 100px);
+    }
+
+    #mainContainer {
+        display: flex;
+        flex: 1;
+    }
+
+    #toolbox {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 999;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px 15px;
+        background-color: #2c2c2c;
+        color: white;
+        font-family: "Roboto", Arial, sans-serif;
+        border-left: 2px solid #444;
+        min-width: 200px;
+        height: 100vh;
+        box-shadow: -2px 0px 8px rgba(0, 0, 0, 0.3);
+        padding-top: 25px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #444 #2c2c2c;
+    }
+
+        #toolbox::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #toolbox::-webkit-scrollbar-thumb {
+            background-color: #444;
+            border-radius: 4px;
+        }
+
+        #toolbox::-webkit-scrollbar-track {
+            background-color: #2c2c2c;
+        }
+
+
+
+    #controls {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+    }
+
+    .tool-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #3a3a3a;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+        text-align: left;
+    }
+
+        .tool-btn:hover {
+            background-color: #505050;
+        }
+
+        .tool-btn i {
+            font-size: 18px;
+        }
+
+    .slider-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+    }
+
+    input[type="range"] {
+        width: 100%;
+        cursor: pointer;
+        background: none;
+        appearance: none;
+        border-radius: 5px;
+    }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #3a3a3a;
+        }
+
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: #555;
+            height: 4px;
+            border-radius: 2px;
+        }
+
+    .tool-btn span {
+        flex-grow: 1;
+    }
+
+    #commandHelper {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: "Roboto", Arial, sans-serif;
+        z-index: 10;
+    }
+
+        #commandHelper h2 {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        #commandHelper ul {
+            list-style-type: none;
+            padding-left: 0;
+            font-size: 12px;
+        }
+
+        #commandHelper li {
+            margin-bottom: 8px;
+        }
+
+    #meshList {
+        margin-top: 15px;
+        width: 100%;
+    }
+
+        #meshList label {
+            color: white;
+            font-size: 16px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+    #meshSelect {
+        background-color: #3a3a3a;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        margin-top: 10px;
+        width: 100%;
+    }
+
+        #meshSelect:hover {
+            background-color: #505050;
+        }
+
+    #meshListContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+        background-color: #3a3a3a;
+        border-radius: 8px;
+        overflow-y: auto;
+        height: 200px;
+    }
+
+    .mesh-item {
+        background-color: #505050;
+        color: white;
+        padding: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+        .mesh-item:hover {
+            background-color: #616161;
+        }
+
+        .mesh-item.selected {
+            background-color: #3498db;
+            color: white;
+        }
+
+    #colorPickerContainer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px;
+        background-color: #3a3a3a;
+        border-radius: 8px;
+        box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 15px;
+        width: 250px;
+    }
+
+        #colorPickerContainer label {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            margin-right: 10px;
+            text-align: left;
+        }
+
+    #colorPicker {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 35px;
+        height: 35px;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        background-color: transparent;
+        padding: 0;
+        outline: none;
+    }
+
+        #colorPicker:focus {
+            outline: none;
+            box-shadow: 0 0 3px 2px rgba(0, 123, 255, 0.5);
+        }
+
+    #flowerModelList {
+        list-style-type: none;
+        padding: 0;
+        margin-top: 20px;
+    }
+
+        #flowerModelList li {
+            padding: 10px;
+            cursor: pointer;
+            border: 1px solid #666;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            text-align: center;
+            background-color: #3b3b3b;
+        }
+
+            #flowerModelList li:hover {
+                background-color: #555; /* Hover effect for items */
+            }
+</style>
+<body>
+    <script src="https://unpkg.com/three@0.139.2/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.139.2/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://unpkg.com/three@0.139.2/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/three@0.139.2/examples/js/exporters/GLTFExporter.js"></script>
+
+
+    <div id="mainContainer">
+        <div id="toolbox">
+            <div id="controls">
+                <div id="colorPickerContainer">
+                    <label for="colorPicker">Choose a color:</label>
+                    <input type="color" id="colorPicker" value="#00ff00" />
+                </div>
+                <button id="resetBtn" class="tool-btn">
+                    <i class="fas fa-undo"></i>
+                    <span>Reset View</span>
+                </button>
+                <div class="slider-container">
+                    <label for="scaleSlider" class="control-label">Scale:</label>
+                    <input type="range"
+                           id="scaleSlider"
+                           min="1"
+                           max="30"
+                           value="1"
+                           step="0.1" />
+                </div>
+                <button id="unselectMeshBtn" class="tool-btn">
+                    <i class="fas fa-times"></i>
+                    <span>Unselect Mesh</span>
+                </button>
+                <button id="addBouquetBtn" class="tool-btn">
+                    <i class="fas fa-gift"></i>
+                    <span>Add Bouquet</span>
+                </button>
+                <button id="addFlower" class="tool-btn">
+                    <i class="fas fa-flower"></i>
+                    <span>Add Flower</span>
+                </button>
+
+                <div id="flowerModelSelector"
+                     class="model-selector"
+                     style="display: none">
+                    <div class="close-btn-container">
+                        <button id="closeFlowerSelector" class="close-btn">
+                            X
+                        </button>
+                    </div>
+                    <h3>Select Flower Model:</h3>
+                    <ul id="flowerModelList"></ul>
+                </div>
+
+                <button id="addRibbonBtn" class="tool-btn">
+                    <i class="fas fa-ribbon"></i>
+                    <span>Add Ribbon</span>
+                </button>
+                <div id="meshList">
+                    <label for="meshSelect">Select Mesh:</label>
+                    <div id="meshListContainer"></div>
+                </div>
+
+                <button id="saveGlbBtn" class="tool-btn">
+                    <span>Save GLB</span>
+                </button>
+                <button class="tool-btn">
+                    <span>Close</span>
+                    <a class="btn btn-primary" asp-action="Create">Close</a>
+                </button>
+            </div>
+        </div>
+
+        <div id="canvasContainer">
+            <canvas id="myCanvas"></canvas>
+        </div>
+    </div>
+
+    <div id="commandHelper">
+        <h2>Controls</h2>
+        <ul>
+            <li><strong>Movement:</strong></li>
+            <li>W: Move Up (Y+)</li>
+            <li>S: Move Down (Y-)</li>
+            <li>A: Move Left (X-)</li>
+            <li>D: Move Right (X+)</li>
+            <li>Q: Move Forward (Z+)</li>
+            <li>E: Move Backward (Z-)</li>
+            <li><strong>Rotation:</strong></li>
+            <li>R: Rotate Clockwise (Y)</li>
+            <li>T: Rotate Counterclockwise (Y)</li>
+            <li>Y: Rotate Clockwise (X)</li>
+            <li>F: Rotate Counterclockwise (X)</li>
+            <li>U: Rotate Clockwise (Z)</li>
+            <li>J: Rotate Counterclockwise (Z)</li>
+            <li><strong>Additional Rotation:</strong></li>
+            <li>I: Rotate Forward (X-axis)</li>
+            <li>K: Rotate Backward (X-axis)</li>
+            <li>O: Rotate Clockwise (Z-axis)</li>
+            <li>L: Rotate Counterclockwise (Z-axis)</li>
+            <li><strong>Scaling:</strong></li>
+            <li>+ (Plus): Increase Scale</li>
+            <li>- (Minus): Decrease Scale</li>
+        </ul>
+    </div>
+
+    <div id="coordsDisplay"
+         style="
+                position: fixed;
+                bottom: 10px;
+                right: 10px;
+                color: white;
+                font-size: 16px;
+                background-color: rgba(0, 0, 0, 0.6);
+                padding: 5px;
+                border-radius: 5px;
+            ">
+        X: 0 | Y: 0 | Z: 0
+    </div>
+
+    <script>
+        let scene,
+            camera,
+            renderer,
+            model,
+            controls,
+            selectedMesh,
+			gridHelper, 
+            meshes = [];
+
+        let selectedOutline = null;
+        let xHelper, yHelper, zHelper;
+        let raycaster,
+            mouse,
+            isDragging = false,
+            offset = new THREE.Vector3();
+        let moveSpeed = 0.1;
+
+        // Initialize the scene
+        function init() {
+            // Create scene
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(0, 0, 50);
+            camera.fov = 75;
+            camera.updateProjectionMatrix();
+            scene.add(camera);
+
+            renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                canvas: document.querySelector("#myCanvas"),
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            const gridSize = 50;
+            const divisions = 50;
+            const gridHelper = new THREE.GridHelper(gridSize, divisions);
+            gridHelper.material.linewidth = 2;
+            gridHelper.setColors(0x888888, 0x444444);
+            scene.add(gridHelper);
+            camera.position.y = 10;
+            camera.position.z = 10;
+            camera.position.x = 10;
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.maxPolarAngle = Math.PI * 0.5;
+            controls.minDistance = 0.1;
+            controls.maxDistance = 100;
+            controls.autoRotate = false;
+
+            scene.add(new THREE.AmbientLight(0xcccccc, 1));
+
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(10, 10, 10);
+            scene.add(light);
+            scene.background = new THREE.Color(0xeeeeee);
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener("keydown", onKeyDown);
+            animate();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function updateMeshList() {
+            const meshListContainer =
+                document.getElementById("meshListContainer");
+            meshListContainer.innerHTML = "";
+
+            meshes.forEach((mesh, index) => {
+                const meshItem = document.createElement("div");
+                meshItem.classList.add("mesh-item");
+                meshItem.textContent = `Mesh ${index + 1}`;
+
+                meshItem.addEventListener("click", () =>
+                    onMeshClick(mesh, meshItem)
+                );
+
+                meshListContainer.appendChild(meshItem);
+            });
+        }
+
+        function deleteMesh(mesh, meshItem) {
+            scene.remove(mesh);
+
+            const meshIndex = meshes.indexOf(mesh);
+            if (meshIndex !== -1) {
+                meshes.splice(meshIndex, 1);
+            }
+
+            updateMeshList();
+        }
+
+        function onMeshClick(mesh, meshItem) {
+            if (selectedMesh) {
+                if (xHelper) scene.remove(xHelper);
+                if (yHelper) scene.remove(yHelper);
+                if (zHelper) scene.remove(zHelper);
+
+                if (selectedOutline) {
+                    scene.remove(selectedOutline);
+                    selectedOutline = null;
+                }
+            }
+
+            selectedMesh = mesh;
+
+            const size = 10;
+            const arrowHeadLength = 2;
+            const arrowHeadWidth = 1;
+
+            xHelper = new THREE.ArrowHelper(
+                new THREE.Vector3(1, 0, 0),
+                selectedMesh.position,
+                size,
+                0xff0000,
+                arrowHeadLength,
+                arrowHeadWidth
+            );
+            yHelper = new THREE.ArrowHelper(
+                new THREE.Vector3(0, 1, 0),
+                selectedMesh.position,
+                size,
+                0x00ff00,
+                arrowHeadLength,
+                arrowHeadWidth
+            );
+            zHelper = new THREE.ArrowHelper(
+                new THREE.Vector3(0, 0, 1),
+                selectedMesh.position,
+                size,
+                0x0000ff,
+                arrowHeadLength,
+                arrowHeadWidth
+            );
+
+            scene.add(xHelper);
+            scene.add(yHelper);
+            scene.add(zHelper);
+
+            const outlineMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffff00,
+                side: THREE.BackSide,
+                transparent: true,
+                opacity: 0.5,
+            });
+
+            const outlineGeometry = new THREE.SphereGeometry(
+                mesh.geometry.boundingSphere.radius + 0.1,
+                32,
+                32
+            );
+            selectedOutline = new THREE.Mesh(
+                outlineGeometry,
+                outlineMaterial
+            );
+
+            selectedOutline.position.copy(selectedMesh.position);
+            scene.add(selectedOutline);
+
+            function updateOutlinePosition() {
+                if (selectedOutline && selectedMesh) {
+                    selectedOutline.position.copy(selectedMesh.position);
+                }
+            }
+
+            scene.onBeforeRender = updateOutlinePosition;
+        }
+
+        function unSelectMesh() {
+            if (selectedMesh) {
+                if (xHelper) scene.remove(xHelper);
+                if (yHelper) scene.remove(yHelper);
+                if (zHelper) scene.remove(zHelper);
+                selectedMesh = null;
+                if (selectedOutline) {
+                    scene.remove(selectedOutline);
+                    selectedOutline = null;
+                }
+            }
+        }
+
+        function onKeyDown(event) {
+            if (!selectedMesh) return;
+
+            const step = moveSpeed;
+            let scaleValue = selectedMesh.scale.x;
+
+            switch (event.key) {
+                case "+":
+                case "=":
+                    scaleValue += step * 10;
+                    break;
+                case "-":
+                    scaleValue -= step * 10;
+                    break;
+                case "w":
+                    selectedMesh.position.y += step;
+                    break;
+                case "s":
+                    selectedMesh.position.y -= step;
+                    break;
+                case "a":
+                    selectedMesh.position.x -= step;
+                    break;
+                case "d":
+                    selectedMesh.position.x += step;
+                    break;
+                case "q":
+                    selectedMesh.position.z += step;
+                    break;
+                case "e":
+                    selectedMesh.position.z -= step;
+                    break;
+
+                case "r":
+                    selectedMesh.rotation.y -= step;
+                    break;
+                case "t":
+                    selectedMesh.rotation.y += step;
+                    break;
+                case "y":
+                    selectedMesh.rotation.x -= step;
+                    break;
+                case "f":
+                    selectedMesh.rotation.x += step;
+                    break;
+                case "u":
+                    selectedMesh.rotation.z -= step;
+                    break;
+                case "j":
+                    selectedMesh.rotation.z += step;
+                    break;
+
+                case "i":
+                    selectedMesh.rotation.x -= step;
+                    break;
+                case "k":
+                    selectedMesh.rotation.x += step;
+                    break;
+                case "o":
+                    selectedMesh.rotation.z -= step;
+                    break;
+                case "l":
+                    selectedMesh.rotation.z += step;
+                    break;
+
+                case "Escape":
+                    unSelectMesh();
+                    break;
+                case "Delete":
+                    deleteMesh(selectedMesh);
+                    break;
+            }
+
+            if (selectedOutline) {
+                selectedOutline.position.copy(selectedMesh.position);
+            }
+
+            scaleValue = Math.max(0.1, Math.min(50, scaleValue));
+            selectedMesh.scale.set(scaleValue, scaleValue, scaleValue);
+            scaleSlider.value = scaleValue;
+
+            if (xHelper) xHelper.position.copy(selectedMesh.position);
+            if (yHelper) yHelper.position.copy(selectedMesh.position);
+            if (zHelper) zHelper.position.copy(selectedMesh.position);
+            updateCoordsDisplay();
+        }
+
+        function updateCoordsDisplay() {
+            const coordsDisplay = document.getElementById("coordsDisplay");
+            const { x, y, z } = selectedMesh.position;
+            coordsDisplay.textContent = `X: ${x.toFixed(
+                2
+            )} | Y: ${y.toFixed(2)} | Z: ${z.toFixed(2)}`;
+        }
+
+        // function changeColor() {
+        //  if (selectedMesh) {
+        //      if (selectedMesh.isMesh) {
+        //          selectedMesh.material.color.setHex(
+        //              Math.random() * 0xffffff
+        //          );
+        //      } else {
+        //          selectedMesh.traverse((child) => {
+        //              if (child.isMesh) {
+        //                  child.material.color.setHex(
+        //                      Math.random() * 0xffffff
+        //                  );
+        //              }
+        //          });
+        //      }
+        //  }
+        // }
+
+        // function addRibbonMesh() {
+        //  const loader = new THREE.GLTFLoader();
+        //  loader.load("/ribbon.glb", (gltf) => {
+        //      model = gltf.scene;
+        //      model.scale.set(1, 1, 1);
+        //      model.position.set(0, 0, 0);
+        //      scene.add(model);
+
+        //      model.traverse((child) => {
+        //          if (child.isMesh) {
+        //              meshes.push(child);
+        //          }
+        //      });
+
+        //      updateMeshList();
+        //      console.log("Model Loaded Successfully");
+        //  });
+        // }
+
+        function addRibbonMesh() {
+            const loader = new THREE.GLTFLoader();
+            loader.load("/models/ribbon.glb", (gltf) => {
+                const model = gltf.scene;
+                model.scale.set(1, 1, 1);
+                model.position.set(0, 0, 0);
+
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.position.set(0, 0, 0);
+                        // meshes.push(child);
+                    }
+                });
+
+                scene.add(model);
+                meshes.push(model);
+                model.updateMatrixWorld();
+                updateMeshList();
+            });
+        }
+
+        function addBouquet() {
+            // const geometry = new THREE.BoxGeometry(5, 5, 5);
+            // const material = new THREE.MeshLambertMaterial({
+            //  color: 0x00ff00,
+            // });
+            // const cube = new THREE.Mesh(geometry, material);
+            // cube.position.set(0, 0, 0);
+            // scene.add(cube);
+            // meshes.push(cube);
+            // updateMeshList();
+            const loader = new THREE.GLTFLoader();
+            loader.load("/models/bouquet.glb", (gltf) => {
+                model = gltf.scene;
+                model.scale.set(0.1, 0.1, 0.1);
+                model.position.set(0, 0, 0);
+
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        // meshes.push(child);
+                        child.position.set(0, 0, 0);
+                    }
+                });
+                scene.add(model);
+                meshes.push(model);
+                model.updateMatrixWorld();
+
+                updateMeshList();
+                console.log("Model Loaded Successfully");
+            });
+        }
+
+        // function addBouquet() {
+        //  const loader = new THREE.GLTFLoader();
+        //  loader.load("/bouquet.glb", (gltf) => {
+        //      const model = gltf.scene;
+        //      model.scale.set(0.1, 0.1, 0.1);
+        //      model.position.set(0, 0, 0);
+
+        //      model.traverse((child) => {
+        //          if (child.isMesh) {
+        //              child.material = new THREE.MeshLambertMaterial({
+        //                  color: 0xffffff,
+        //              });
+        //          }
+        //      });
+
+        //      scene.add(model);
+
+        //      const group = new THREE.Group();
+        //      group.add(model);
+        //      scene.add(group);
+
+        //      meshes.push(model);
+
+        //      selectedMesh = model;
+        //      updateMeshList();
+
+        //      console.log("Model Loaded Successfully");
+        //  });
+        // }
+
+        function addSphere() {
+            const geometry = new THREE.SphereGeometry(5, 32, 32);
+            const material = new THREE.MeshLambertMaterial({
+                color: 0x0000ff,
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.position.set(10, 0, 0);
+            scene.add(sphere);
+            meshes.push(sphere);
+            updateMeshList();
+        }
+
+        document
+            .getElementById("colorPicker")
+            .addEventListener("input", function (event) {
+                if (selectedMesh) {
+                    const selectedColor = event.target.value;
+                    if (selectedMesh.isMesh) {
+                        selectedMesh.material.color.set(selectedColor);
+                    } else {
+                        selectedMesh.traverse((child) => {
+                            if (child.isMesh) {
+                                child.material.color.set(selectedColor);
+                            }
+                        });
+                    }
+                }
+            });
+
+        document
+            .getElementById("resetBtn")
+            .addEventListener("click", () => {
+                camera.position.set(-100, 100, -50);
+                controls.update();
+            });
+        const scaleSlider = document.getElementById("scaleSlider");
+        scaleSlider.addEventListener("input", () => {
+            if (selectedMesh) {
+                const scaleValue = parseFloat(scaleSlider.value);
+                selectedMesh.scale.set(scaleValue, scaleValue, scaleValue);
+            }
+        });
+        document
+            .getElementById("unselectMeshBtn")
+            .addEventListener("click", unSelectMesh);
+        document
+            .getElementById("addBouquetBtn")
+            .addEventListener("click", addBouquet);
+        // document
+        //  .getElementById("addSphereBtn")
+        //  .addEventListener("click", addSphere);
+        document
+            .getElementById("addRibbonBtn")
+            .addEventListener("click", addRibbonMesh);
+
+        document
+            .getElementById("addFlower")
+            .addEventListener("click", function () {
+                const selector = document.getElementById(
+                    "flowerModelSelector"
+                );
+                selector.style.display =
+                    selector.style.display === "none" ? "block" : "none";
+
+                if (
+                    document.getElementById("flowerModelList").children
+                        .length === 0
+                ) {
+                    const flowerModels = [
+                        {
+                            name: "Flower 1",
+                            modelPath: "/models/blue_tulips_low_poly.glb",
+                        },
+                        {
+                            name: "Flower 2",
+                            modelPath: "/models/papa_meilland_rose.glb",
+                        },
+                        {
+                            name: "Flower 3",
+                            modelPath: "/models/dried_yellow_rose.glb",
+                        },
+                    ];
+
+                    const modelList =
+                        document.getElementById("flowerModelList");
+
+                    flowerModels.forEach((flower) => {
+                        const listItem = document.createElement("li");
+                        listItem.textContent = flower.name;
+                        listItem.addEventListener("click", function () {
+                            addFlowerToScene(flower.modelPath);
+                        });
+                        modelList.appendChild(listItem);
+                    });
+                }
+            });
+
+        document
+            .getElementById("closeFlowerSelector")
+            .addEventListener("click", function () {
+                const selector = document.getElementById(
+                    "flowerModelSelector"
+                );
+                selector.style.display = "none";
+            });
+
+        function addFlowerToScene(modelPath) {
+            const loader = new THREE.GLTFLoader();
+            loader.load(modelPath, function (gltf) {
+                const model = gltf.scene;
+                model.scale.set(1, 1, 1);
+                model.position.set(0, 0, 0);
+                scene.add(model);
+                meshes.push(model);
+                model.updateMatrixWorld();
+                updateMeshList();
+                console.log("Flower model added to the scene");
+            });
+        }
+
+        document.getElementById('saveGlbBtn').addEventListener('click', function() {
+			scene.remove(gridHelper);
+            const exporter = new THREE.GLTFExporter();
+            exporter.parse(scene, function(result) {
+                const blob = new Blob([result], { type: 'application/octet-stream' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'model.glb';
+                link.click();
+            }, { binary: true });
+
+			scene.add(gridHelper);
+        });
+
+        init();
+    </script>
+</body>
+
+</html>

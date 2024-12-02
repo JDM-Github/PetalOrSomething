@@ -1,0 +1,391 @@
+﻿<style>
+
+	#myCanvas {
+		position: absolute;
+		top: 0;
+		left: 0;
+		display: block;
+		width: 100%;
+		height: calc(100% - 100px);
+	}
+
+	#mainContainer {
+		display: flex;
+		flex: 1;
+	}
+
+	#toolbox {
+		position: absolute;
+		top: 0;
+		left: 0;
+		z-index: 999;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		padding: 10px 15px;
+		background-color: #2c2c2c;
+		color: white;
+		font-family: "Roboto", Arial, sans-serif;
+		border-left: 2px solid #444;
+		min-width: 200px;
+		height: 100vh;
+		box-shadow: -2px 0px 8px rgba(0, 0, 0, 0.3);
+		padding-top: 25px;
+		overflow-y: auto;
+		scrollbar-width: thin;
+		scrollbar-color: #444 #2c2c2c;
+	}
+
+		#toolbox::-webkit-scrollbar {
+			width: 8px;
+		}
+
+		#toolbox::-webkit-scrollbar-thumb {
+			background-color: #444;
+			border-radius: 4px;
+		}
+
+		#toolbox::-webkit-scrollbar-track {
+			background-color: #2c2c2c;
+		}
+
+	/* Canvas container */
+
+
+	/* Controls styling */
+	#controls {
+		display: flex;
+		flex-direction: column;
+		gap: 15px;
+		width: 100%;
+	}
+
+	/* Button styling */
+	.tool-btn {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		background-color: #3a3a3a;
+		color: white;
+		border: none;
+		padding: 10px 15px;
+		border-radius: 8px;
+		cursor: pointer;
+		font-size: 16px;
+		transition: background-color 0.3s ease;
+		text-align: left;
+	}
+
+		.tool-btn:hover {
+			background-color: #505050;
+		}
+
+		.tool-btn i {
+			font-size: 18px;
+		}
+
+	/* Slider container styling */
+	.slider-container {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px;
+		width: 100%;
+	}
+
+	input[type="range"] {
+		width: 100%;
+		cursor: pointer;
+		background: none;
+		appearance: none;
+		border-radius: 5px;
+	}
+
+		input[type="range"]::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 15px;
+			height: 15px;
+			border-radius: 50%;
+			background: #fff;
+			border: 2px solid #3a3a3a;
+		}
+
+		input[type="range"]::-webkit-slider-runnable-track {
+			background: #555;
+			height: 4px;
+			border-radius: 2px;
+		}
+
+	.tool-btn span {
+		flex-grow: 1;
+	}
+
+	#commandHelper {
+		position: absolute;
+		top: 10px;
+		right: 10px;
+		background-color: rgba(0, 0, 0, 0.7);
+		color: white;
+		padding: 15px;
+		border-radius: 8px;
+		font-family: "Roboto", Arial, sans-serif;
+		z-index: 10;
+	}
+
+		#commandHelper h2 {
+			font-size: 14px;
+			margin-bottom: 10px;
+		}
+
+		#commandHelper ul {
+			list-style-type: none;
+			padding-left: 0;
+			font-size: 12px;
+		}
+
+		#commandHelper li {
+			margin-bottom: 8px;
+		}
+
+	#meshList {
+		margin-top: 15px;
+		width: 100%;
+	}
+
+		#meshList label {
+			color: white;
+			font-size: 16px;
+			margin-bottom: 8px;
+			display: block;
+		}
+
+	#meshSelect {
+		background-color: #3a3a3a;
+		color: white;
+		border: none;
+		padding: 10px;
+		border-radius: 8px;
+		font-size: 16px;
+		cursor: pointer;
+		margin-top: 10px;
+		width: 100%;
+	}
+
+		#meshSelect:hover {
+			background-color: #505050;
+		}
+
+	/* Custom list item styling */
+	#meshListContainer {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		padding: 10px;
+		background-color: #3a3a3a;
+		border-radius: 8px;
+		overflow-y: auto;
+		height: 200px;
+	}
+
+	.mesh-item {
+		background-color: #505050;
+		color: white;
+		padding: 10px;
+		border-radius: 8px;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+	}
+
+		.mesh-item:hover {
+			background-color: #616161;
+		}
+
+		.mesh-item.selected {
+			background-color: #3498db;
+			color: white;
+		}
+
+	#colorPickerContainer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 10px;
+		background-color: #3a3a3a;
+		border-radius: 8px;
+		box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+		margin-bottom: 15px;
+		width: 250px;
+	}
+
+		#colorPickerContainer label {
+			font-size: 14px;
+			font-weight: 600;
+			color: white;
+			margin-right: 10px;
+			text-align: left;
+		}
+
+	#colorPicker {
+		-webkit-appearance: none;
+		appearance: none;
+		width: 35px;
+		height: 35px;
+		border: none;
+		border-radius: 50%;
+		cursor: pointer;
+		background-color: transparent;
+		padding: 0;
+		outline: none;
+	}
+
+		#colorPicker:focus {
+			outline: none;
+			box-shadow: 0 0 3px 2px rgba(0, 123, 255, 0.5);
+		}
+
+	#flowerModelList {
+		list-style-type: none;
+		padding: 0;
+		margin-top: 20px;
+	}
+
+		#flowerModelList li {
+			padding: 10px;
+			cursor: pointer;
+			border: 1px solid #666;
+			margin-bottom: 5px;
+			border-radius: 5px;
+			text-align: center;
+			background-color: #3b3b3b;
+		}
+
+			#flowerModelList li:hover {
+				background-color: #555; /* Hover effect for items */
+			}
+
+			.top-btn {
+				z-index: 999;
+				position: absolute;
+				top: 0;
+				left: 0;
+			}
+</style>
+<body>
+	<script src="https://unpkg.com/three@0.139.2/build/three.min.js"></script>
+	<script src="https://unpkg.com/three@0.139.2/examples/js/loaders/GLTFLoader.js"></script>
+	<script src="https://unpkg.com/three@0.139.2/examples/js/controls/OrbitControls.js"></script>
+
+	<a asp-area="" asp-controller="Home" asp-action="ProductView" class="top-btn btn btn-pink w-100 rounded-pill">Go Back</a>
+	<div id="mainContainer">
+		<div id="canvasContainer">
+			<canvas id="myCanvas"></canvas>
+		</div>
+	</div>
+
+	<div id="commandHelper">
+		<h2>Controls</h2>
+		<ul>
+			<li><strong>Left Click:</strong> Rotate the camera (Orbit mode)</li>
+			<li><strong>Right Click:</strong> Pan the camera</li>
+			<li><strong>Middle Mouse (Scroll):</strong> Zoom in/out</li>
+		</ul>
+	</div>
+
+	<script>
+		let scene,
+			camera,
+			renderer,
+			model,
+			controls,
+			selectedMesh,
+			meshes = [];
+
+		let selectedOutline = null;
+		let xHelper, yHelper, zHelper;
+		let raycaster,
+			mouse,
+			isDragging = false,
+			offset = new THREE.Vector3();
+		let moveSpeed = 0.1;
+
+		function init() {
+			// Create scene
+			scene = new THREE.Scene();
+			camera = new THREE.PerspectiveCamera(
+				75,
+				window.innerWidth / window.innerHeight,
+				0.1,
+				1000
+			);
+			camera.position.set(0, 0, 50);
+			camera.fov = 75;
+			camera.updateProjectionMatrix();
+			scene.add(camera);
+
+			renderer = new THREE.WebGLRenderer({
+				antialias: true,
+				canvas: document.querySelector("#myCanvas"),
+			});
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			document.body.appendChild(renderer.domElement);
+
+			const gridSize = 50;
+			const divisions = 50;
+			const gridHelper = new THREE.GridHelper(gridSize, divisions);
+			gridHelper.material.linewidth = 2;
+			gridHelper.setColors(0x888888, 0x444444);
+			scene.add(gridHelper);
+			camera.position.y = 10;
+			camera.position.z = 10;
+			camera.position.x = 10;
+
+			raycaster = new THREE.Raycaster();
+			mouse = new THREE.Vector2();
+
+			controls = new THREE.OrbitControls(camera, renderer.domElement);
+			controls.maxPolarAngle = Math.PI * 0.5;
+			controls.minDistance = 0.1;
+			controls.maxDistance = 100;
+			controls.autoRotate = false;
+
+			scene.add(new THREE.AmbientLight(0xcccccc, 1));
+
+			const light = new THREE.DirectionalLight(0xffffff, 1);
+			light.position.set(10, 10, 10);
+			scene.add(light);
+			scene.background = new THREE.Color(0xeeeeee);
+
+			const loader = new THREE.GLTFLoader();
+			loader.load("/models/papa_meilland_rose.glb", (gltf) => {
+				model = gltf.scene;
+				model.scale.set(30, 30, 30); 
+				model.position.set(0, 0, 0);
+				scene.add(model);
+				console.log("Model Loaded Successfully");
+			});
+
+			window.addEventListener('resize', onWindowResize);
+			animate();
+		}
+
+		// Window resize event
+		function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize(window.innerWidth, window.innerHeight);
+		}
+
+		// Animation loop
+		function animate() {
+			requestAnimationFrame(animate);
+			controls.update(); // Update controls
+			renderer.render(scene, camera);
+		}
+
+
+		init();
+	</script>
+</body>
+
+</html>
