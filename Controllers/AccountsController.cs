@@ -67,7 +67,7 @@ namespace PetalOrSomething.Controllers
 
                 _context.Add(account);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Login", "Accounts");
             }
             return View(account);
         }
@@ -96,6 +96,7 @@ namespace PetalOrSomething.Controllers
                     ViewData["UserId"] = "admin";
                     return RedirectToAction("Index", "Home");
                 }
+
                 var account = await _context.Account
                     .FirstOrDefaultAsync(a => a.Email == Email);
 
@@ -104,21 +105,23 @@ namespace PetalOrSomething.Controllers
                     ModelState.AddModelError(string.Empty, "Invalid login attempt. Email not found.");
                     return View();
                 }
+
                 if (!BCrypt.Net.BCrypt.Verify(Password, account.Password))
                 {
                     ModelState.AddModelError(string.Empty, "Invalid login attempt. Incorrect password.");
                     return View();
                 }
+
                 HttpContext.Session.SetString("UserId", account.Id.ToString());
                 HttpContext.Session.SetString("UserName", $"{account.FirstName} {account.LastName}");
-                ViewData["UserId"] = account.Id.ToString();
+                ViewData["UserId"] = account.Id.ToString(); // Optionally, set this to share in your views
 
                 return RedirectToAction("Index", "Home");
             }
 
-            // Return to login view with errors
             return View();
         }
+
 
 
         // GET: Accounts/Edit/5

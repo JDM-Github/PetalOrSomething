@@ -22,6 +22,11 @@ namespace PetalOrSomething.Controllers
             return View();
         }
 
+        public IActionResult ProductEdit()
+        {
+            return View();
+        }
+
         public IActionResult OrderHere()
         {
             var userId = HttpContext.Session.GetString("UserId");
@@ -29,14 +34,14 @@ namespace PetalOrSomething.Controllers
             return View();
         }
 
-		public IActionResult View3D()
-		{
+        public IActionResult View3D()
+        {
             var userId = HttpContext.Session.GetString("UserId");
             ViewData["UserId"] = userId;
             return View();
-		}
+        }
 
-		public IActionResult Privacy()
+        public IActionResult Privacy()
         {
             var userId = HttpContext.Session.GetString("UserId");
             ViewData["UserId"] = userId;

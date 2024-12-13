@@ -4,13 +4,11 @@ using PetalOrSomething.Models;
 
 namespace PetalOrSomething.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext(options)
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
-        {
-        }
-        public DbSet<PetalOrSomething.Models.Account> Account { get; set; } = default!;
+        public DbSet<Account> Account { get; set; } = default!;
+        public required DbSet<Cart> Carts { get; set; }
+        public required DbSet<CartItem> CartItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -19,7 +17,8 @@ namespace PetalOrSomething.Data
                 .HasIndex(a => a.Email)
                 .IsUnique();
         }
-        public DbSet<PetalOrSomething.Models.Product> Product { get; set; } = default!;
+        public DbSet<Product> Product { get; set; } = default!;
+        public required DbSet<Inventory> Inventories { get; set; }
 
     }
 }

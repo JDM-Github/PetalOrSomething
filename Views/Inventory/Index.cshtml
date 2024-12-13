@@ -1,0 +1,41 @@
+@model IEnumerable<PetalOrSomething.Models.Inventory>
+
+@{
+    ViewData["Title"] = "Inventory List";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<p>
+    <a class="btn btn-primary" href="@Url.Action("Create")">Create New Item</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Product Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Stock Quantity</th>
+            <th>Category</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.ProductName</td>
+                <td>@item.Description</td>
+                <td>@item.Price</td>
+                <td>@item.StockQuantity</td>
+                <td>@item.Category</td>
+                <td>
+                    <a class="btn btn-info" href="@Url.Action("Details", new { id = item.Id })">Details</a>
+                    <a class="btn btn-warning" href="@Url.Action("Edit", new { id = item.Id })">Edit</a>
+                    <a class="btn btn-danger" href="@Url.Action("Delete", new { id = item.Id })">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

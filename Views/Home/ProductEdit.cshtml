@@ -1,4 +1,4 @@
-﻿@model IEnumerable<PetalOrSomething.Models.Product>
+@model IEnumerable<PetalOrSomething.Models.Product>
 <style>
     #myCanvas {
         position: absolute;
@@ -318,9 +318,12 @@
                 <button id="saveGlbBtn" class="tool-btn">
                     <span>Save GLB</span>
                 </button>
+                <a asp-controller="Cart" asp-action="Index" id="addToCart" class="tool-btn">
+                    <span>Add to Cart</span>
+                </a>
                 <button class="tool-btn">
                     <span>Close</span>
-                    <a class="btn btn-primary" asp-action="Create">Close</a>
+                    <a class="btn btn-primary" asp-controller="Home" asp-action="ProductView">Close</a>
                 </button>
             </div>
         </div>
@@ -389,9 +392,7 @@
             offset = new THREE.Vector3();
         let moveSpeed = 0.1;
 
-        // Initialize the scene
         function init() {
-            // Create scene
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(
                 75,
@@ -436,6 +437,8 @@
             light.position.set(10, 10, 10);
             scene.add(light);
             scene.background = new THREE.Color(0xeeeeee);
+
+            addFlowerToScene("/models/papa_meilland_rose.glb");
 
             window.addEventListener('resize', onWindowResize);
             window.addEventListener("keydown", onKeyDown);
@@ -896,11 +899,12 @@
             const loader = new THREE.GLTFLoader();
             loader.load(modelPath, function (gltf) {
                 const model = gltf.scene;
-                model.scale.set(1, 1, 1);
+                model.scale.set(30, 30, 30);
                 model.position.set(0, 0, 0);
                 scene.add(model);
                 meshes.push(model);
                 model.updateMatrixWorld();
+                selectedMesh = model;
                 updateMeshList();
                 console.log("Flower model added to the scene");
             });
