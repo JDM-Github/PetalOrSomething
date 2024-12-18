@@ -1,0 +1,35 @@
+@model IEnumerable<PetalOrSomething.Models.Asset>
+
+@{
+    ViewData["Title"] = "Assets List";
+}
+
+<h1>Assets</h1>
+
+<a href="@Url.Action("Add")">Add New Asset</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>3D Model Link</th>
+            <th>Price</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var asset in Model)
+        {
+            <tr>
+                <td>@asset.Id</td>
+                <td>@asset.Model3DLink</td>
+                <td>@asset.Price</td>
+                <td>
+                    <a href="@Url.Action("Details", new { id = asset.Id })">Details</a> |
+                    <a href="@Url.Action("Edit", new { id = asset.Id })">Edit</a> |
+                    <a href="@Url.Action("Delete", new { id = asset.Id })">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

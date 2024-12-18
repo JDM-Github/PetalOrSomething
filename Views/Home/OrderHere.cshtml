@@ -31,15 +31,9 @@
         position: relative;
         width: 100%;
         height: 250px;
-        /* Set consistent height */
         overflow: hidden;
-        /* Hide overflow for rounded top */
-        border-top-left-radius: 50%;
-        /* Large arc */
-        border-top-right-radius: 50%;
-        /* Large arc */
-
-
+        border-top-left-radius: 100px;
+        border-top-right-radius: 100px;
     }
 
     .image-container img {
@@ -49,8 +43,8 @@
     }
 
     .product-card {
-        border-top-left-radius: 50%;
-        border-top-right-radius: 50%;
+        border-top-left-radius: 100px;
+        border-top-right-radius: 100px;
         box-shadow: 0 1px 10px #00000077 !important;
     }
 
@@ -167,9 +161,8 @@
 
     <div class="row g-4" id="productList">
         <div class="col-lg-3 col-md-6">
-            <div class="card shadow-sm border-0 product-card">
+            @* <div class="card shadow-sm border-0 product-card">
                 <div class="image-container">
-                    <!--<img src="https://i.pinimg.com/736x/e0/7e/d3/e07ed390935af4f78b8aa2787a1cc36c.jpg" class="card-img-top" alt="Sunflower Bouquet"> -->
                     <model-viewer style="width: 100%; height: 100%; object-fit: contain;"
                         src="/models/papa_meilland_rose.glb" alt="3D Product" class="card-img-top" auto-rotate
                         camera-controls background-color="#FFFFFF"></model-viewer>
@@ -184,35 +177,14 @@
                         <i class="far fa-star text-warning"></i>
                     </div>
                     <p class="card-text">₱25</p>
-                    <a asp-area="" asp-controller="Home" asp-action="ProductView"
-                        class="btn btn-pink w-100 rounded-pill">Order Now</a>
+                    @if (Context.Session.GetString("UserId") != null)
+                    {
+                        <a asp-area="" asp-controller="Home" asp-action="ProductView"
+                            class="btn btn-pink w-100 rounded-pill">Order Now</a>
+                    }
                 </div>
-            </div>
+            </div> *@
         </div>
-
-        <div class="col-lg-3 col-md-6">
-            <div class="card shadow-sm border-0 product-card">
-                <div class="image-container">
-                    <img src="https://www.floraprima.de/media/cache/ZmFydGlrZWwvMzU2MjkvREU5OTAxNDVfYXJ0aWtlbGJpbGRfY3hfZWpwZ19jeF93NjAwX2N4X2g2MDBfY3hfYV9jeF9tMTY2NjY5MDcxMl9jeF9kZQ==/it50-flower-bouquet-von-herzen.jpg"
-                        class="card-img-top" alt="Tulip Bouquet">
-                </div>
-                <div class="card-body text-center">
-                    <h5 class="card-title fw-bold">Tulip Bouquet</h5>
-                    <!-- Rating -->
-                    <div class="rating mb-2">
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="far fa-star text-warning"></i>
-                        <i class="far fa-star text-warning"></i>
-                    </div>
-                    <p class="card-text">₱30</p>
-                    <a asp-area="" asp-controller="Home" asp-action="ProductView"
-                        class="btn btn-pink w-100 rounded-pill">Order Now</a>
-                </div>
-            </div>
-        </div>
-
     </div>
 
 
@@ -244,4 +216,54 @@
             console.log(`Search: ${searchText}, Category: ${category}`);
         }
     </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('/Home/GetProducts')
+                .then(response => response.json())
+                .then(products => {
+                    const productList = document.getElementById("productList");
+
+                    productList.innerHTML = products.map(product => `
+                        <div class="col-lg-3 col-md-6">
+                            <div class="card shadow-sm border-0 product-card">
+                                <div class="image-container">
+                                    <model-viewer style="width: 100%; height: 100%; object-fit: contain;"
+                                        src="${product.model3DLink}" alt="3D Product" class="card-img-top" auto-rotate
+                                        camera-controls background-color="#FFFFFF"></model-viewer>
+                                </div>
+                                <div class="card-body text-center">
+                                    <h5 class="card-title fw-bold">${product.name}</h5>
+                                    <div class="rating mb-2">
+                                        ${generateStars(product.rating)}
+                                    </div>
+                                    <p class="card-text">₱${product.price}</p>
+                                    ${getOrderButton(product.id)}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                });
+
+            function generateStars(rating) {
+                const fullStars = Math.floor(rating);
+                const halfStar = rating % 1 >= 0.5;
+                return `
+                    ${'<i class="fas fa-star text-warning"></i>'.repeat(fullStars)}
+                    ${halfStar ? '<i class="fas fa-star-half-alt text-warning"></i>' : ''}
+                    ${'<i class="far fa-star text-warning"></i>'.repeat(5 - Math.ceil(rating))}
+                `;
+            }
+
+            function getOrderButton(productId) {
+                const isLoggedIn = '@(Context.Session.GetString("isAdmin") == "2")';
+                if (isLoggedIn) {
+                    const orderUrl = `/Home/ProductView/${productId}`;
+                    return `<a href="${orderUrl}" class="btn btn-pink w-100 rounded-pill">Order Now</a>`;
+                }
+                return '';
+            }
+        });
+    </script>
+
 }

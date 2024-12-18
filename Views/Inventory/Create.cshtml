@@ -1,0 +1,48 @@
+@model PetalOrSomething.Models.FlowerInventory
+
+@{
+    ViewData["Title"] = "Create Flower Inventory";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header text-center bg-light">
+            <h5 class="fw-bold mb-0">Add New Flower Inventory</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label">Flower Name</label>
+                    <input asp-for="Name" class="form-control" placeholder="Enter flower name" required />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Model3DLink" class="form-label">3D Model Link</label>
+                    <input asp-for="Model3DLink" class="form-control" placeholder="Enter 3D model URL" />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Model2DLink" class="form-label">2D Model Link</label>
+                    <input asp-for="Model2DLink" class="form-control" placeholder="Enter 2D model URL" />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Price" class="form-label">Price</label>
+                    <input asp-for="Price" type="number" step="0.01" class="form-control" placeholder="Enter price"
+                        required />
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

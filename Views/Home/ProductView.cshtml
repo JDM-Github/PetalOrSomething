@@ -1,131 +1,38 @@
-﻿@{
+﻿@model PetalOrSomething.Models.FlowerInventory
+
+@{
 	ViewData["Title"] = "ProductView";
 }
 
-<style>
-	.container {
-		background-image: linear-gradient(to right, rgba(255, 255, 255, 0) 10%, white 50%), url("https://img.freepik.com/premium-photo/grass-blowing-wind-with-pink-blue-sky-background_662214-79297.jpg");
-		background-size: 100% 50%, cover;
-		background-position: left center, right;
-		background-attachment: fixed;
-		/* Ensures that the image doesn't scroll */
-	}
-
-	.product-description,
-	.product-price,
-	.note,
-	.note-to-seller textarea {
-		font-size: 0.85rem;
-		/* Smaller font size */
-	}
-
-	.product-price {
-		text-shadow: 0 5px 10px #00000011;
-	}
-
-	.product-options label,
-	.note-to-seller label {
-		font-size: 0.85rem;
-		/* Smaller font size */
-	}
-
-	.note {
-		font-size: 0.85rem;
-		/* Smaller font size */
-	}
-
-	.product-title {
-		text-shadow: 0 5px 10px #00000022;
-	}
-
-	.product-row {
-		display: flex;
-		align-items: flex-start;
-		/* Align content to the top */
-	}
-
-	.product-image {
-		width: 100%;
-		max-height: auto;
-		object-fit: cover;
-	}
-
-	.rating i {
-		color: yellow;
-		font-size: 24px;
-		margin-right: 2px;
-	}
-
-	.custom-btn {
-		background-color: #F6C4C3;
-		color: white;
-		border: none;
-		box-shadow: 0 5px 10px #00000077;
-	}
-
-	.custom-btn:hover {
-		background-color: #d6a4a3;
-		color: white;
-	}
-
-	/* Outline Button Style */
-	.custom-btn-outline {
-		background-color: transparent;
-		border: 2px solid #5f4b8b;
-		color: #5f4b8b;
-		box-shadow: 0 5px 10px #00000077;
-	}
-
-	.custom-btn-outline:hover {
-		background-color: #4e4b7b;
-		color: white;
-	}
-
-	.btn-3d-view {
-		position: absolute;
-		top: 0px;
-		right: 0px;
-		background-color: #FF45A2;
-		color: white;
-		padding: 10px 20px;
-		border: none;
-		border-radius: 30px;
-		font-size: 1rem;
-		font-weight: bold;
-		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-		transition: background-color 0.3s, box-shadow 0.3s;
-	}
-
-	.btn-3d-view:hover {
-		background-color: #d6a4a3;
-		box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-	}
-</style>
-
 <div class="container">
 	<div class="product-row">
-		<!-- Product Information (Left) -->
 		<div class="col-md-6 mb-4 mb-md-0">
 			<h2 class="product-title text-primary fw-bold"
 				style="font-size: 3rem !important; color: #5f4b8b !important">
-				Product Name
+				@Model.Name
 			</h2>
 			<p class="product-description text-muted" style="font-size: 0.85rem">
-				Blah blah blah blah blahblah blahblah blahblah blahblah blahblah blahblah blahblah blahblah blahblah
-				blah
+				@Model.Description
 			</p>
 
-			<!-- Product Ratings -->
 			<div class="rating mb-1">
-				<i class="fas fa-star text-warning"></i>
-				<i class="fas fa-star text-warning"></i>
-				<i class="fas fa-star text-warning"></i>
-				<i class="fas fa-star text-warning"></i>
-				<i class="far fa-star text-warning"></i>
+				@for (int i = 0; i < 5; i++)
+				{
+					if (i < Model.Rating)
+					{
+						<i class="fas fa-star text-warning"></i>
+					}
+					else
+					{
+						<i class="far fa-star text-warning"></i>
+					}
+				}
 			</div>
 
 			<div class="price-container mb-2">
-				<span class="product-price fw-bold" style="font-size: 2rem; color: #FF45A2 !important;">$99.99</span>
+				<span class="product-price fw-bold" style="font-size: 2rem; color: #FF45A2 !important;">
+					₱@Model.Price
+				</span>
 			</div>
 
 			<div class="product-options mb-4">
@@ -134,7 +41,6 @@
 					class="form-control w-auto" />
 			</div>
 
-			<!-- Note to Seller -->
 			<div class="note-to-seller mt-4 mb-3">
 				<label for="note" class="form-label" style="font-size: 0.85rem">Note to Seller:</label>
 				<textarea id="note" rows="4" class="form-control"
@@ -143,24 +49,18 @@
 
 			<div class="button-group mb-4">
 				<button class="btn custom-btn btn-lg me-2"
-					onclick="addToCart(1, 'Product Name', 99.99, document.getElementById('quantity').value, 'image-link.jpg')">
+					onclick="addToCart(@Model.Id, '@Model.Name', @Model.Price, document.getElementById('quantity').value, '@Model.Model2DLink')">
 					Add to Cart
 				</button>
 				<button class="btn custom-btn btn-lg me-2">Buy Now</button>
-				<a class="btn custom-btn btn-lg me-2" asp-controller="Home" asp-action="ProductEdit">CUSTOMIZE</a>
+				<a class="btn custom-btn btn-lg me-2" asp-controller="Home" asp-action="Index">CUSTOMIZE</a>
 			</div>
-
 		</div>
 
-		<div class="col-md-6 position-relative">
-			@* <img src="https://i.pinimg.com/736x/e0/7e/d3/e07ed390935af4f78b8aa2787a1cc36c.jpg" alt="Product Image"
-				class="img-fluid product-image" /> *@
-			<model-viewer style="width: 100%; height: 100%; object-fit: contain;" src="/models/papa_meilland_rose.glb"
-				alt="3D Product" class="card-img-top" auto-rotate camera-controls
-				background-color="#FFFFFF"></model-viewer>
-
-			<!-- 3D View Button -->
-			@* <a class="btn btn-primary" asp-controller="Home" asp-action="View3D">View in 3D</a> *@
+		<div class="col-md-6 position-relative" style="height: 400px;">
+			<model-viewer style="width: 100%; height: 100%; object-fit: contain;" src="@Model.Model3DLink"
+				alt="3D Product" class="card-img-top" auto-rotate camera-controls background-color="#FFFFFF">
+			</model-viewer>
 		</div>
 	</div>
 </div>
@@ -176,22 +76,17 @@
 			image: image
 		};
 
-		fetch('/Cart/AddItem', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
+		$.ajax({
+			url: '@Url.Action("AddItem", "Cart")',
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(cartItem),
+			success: function () {
+				alert("Item added to cart!");
 			},
-			body: JSON.stringify(cartItem)
-		})
-			.then(response => {
-				if (response.redirected) {
-					window.location.href = response.url;
-				} else if (response.ok) {
-					alert('Item added to cart!');
-				} else {
-					alert('Error adding item to cart.');
-				}
-			})
-			.catch(error => console.error('Error:', error));
+			error: function (xhr, status, error) {
+				alert("Failed to add item to cart.");
+			}
+		});
 	}
 </script>

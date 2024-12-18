@@ -1,0 +1,16 @@
+@model PetalOrSomething.Models.Asset
+
+@{
+    ViewData["Title"] = "Asset Details";
+}
+
+<h1>Asset Details</h1>
+
+<div>
+    <strong>3D Model Link:</strong> @Model.Model3DLink
+</div>
+<div>
+    <strong>Price:</strong> @Model.Price
+</div>
+
+<a href="@Url.Action("Index")">Back to Asset List</a>

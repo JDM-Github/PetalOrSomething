@@ -1,0 +1,22 @@
+@model PetalOrSomething.Models.Asset
+
+@{
+    ViewData["Title"] = "Add New Asset";
+}
+
+<h1>Add New Asset</h1>
+
+<form asp-action="Add" method="post">
+    <div class="form-group">
+        <label for="Model3DLink">3D Model Link</label>
+        <input type="text" class="form-control" id="Model3DLink" name="Model3DLink" value="@Model.Model3DLink"
+            required />
+    </div>
+    <div class="form-group">
+        <label for="Price">Price</label>
+        <input type="number" class="form-control" id="Price" name="Price" value="@Model.Price" required step="0.01" />
+    </div>
+    <button type="submit" class="btn btn-primary">Add Asset</button>
+</form>
+
+<a href="@Url.Action("Index")">Back to Asset List</a>

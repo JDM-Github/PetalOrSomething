@@ -1,0 +1,112 @@
+@model PetalOrSomething.Models.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 text-center fw-bold">Admin Dashboard</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Flowers</h5>
+                    <p class="card-text display-4 fw-bold">@Model.TotalFlowers</p>
+                    <a href="@Url.Action("Index", "FlowerInventory")" class="btn btn-primary">View All Flowers</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Stock</h5>
+                    <p class="card-text display-4 fw-bold">@Model.TotalStock</p>
+                    <a href="@Url.Action("Index", "FlowerInventory")" class="btn btn-primary">View Stock</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Expired Stocks</h5>
+                    <p class="card-text display-4 fw-bold">@Model.TotalExpiredStock</p>
+                    <a href="@Url.Action("Expired", "FlowerInventory")" class="btn btn-danger">View Expired Stocks</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title">Stock Analytics</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="stockChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title">Expiry Analytics</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="expiryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var ctxStock = document.getElementById('stockChart').getContext('2d');
+        var stockChart = new Chart(ctxStock, {
+            type: 'bar',
+            data: {
+                labels: ['Available Stock', 'Expired Stock'],
+                datasets: [{
+                    label: 'Stock Levels',
+                    data: [@Model.TotalStock, @Model.TotalExpiredStock],
+                    backgroundColor: ['#28a745', '#dc3545'],
+                    borderColor: ['#28a745', '#dc3545'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        var ctxExpiry = document.getElementById('expiryChart').getContext('2d');
+        var expiryChart = new Chart(ctxExpiry, {
+            type: 'pie',
+            data: {
+                labels: ['Expired', 'Not Expired'],
+                datasets: [{
+                    label: 'Expiry Status',
+                    data: [@Model.ExpiredPercentage, @Model.NotExpiredPercentage],
+                    backgroundColor: ['#dc3545', '#28a745'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+    </script>
+}

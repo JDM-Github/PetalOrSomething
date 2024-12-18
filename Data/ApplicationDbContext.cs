@@ -6,7 +6,7 @@ namespace PetalOrSomething.Data
 {
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext(options)
     {
-        public DbSet<Account> Account { get; set; } = default!;
+        public required DbSet<Account> Account { get; set; } = default!;
         public required DbSet<Cart> Carts { get; set; }
         public required DbSet<CartItem> CartItems { get; set; }
 
@@ -20,5 +20,8 @@ namespace PetalOrSomething.Data
         public DbSet<Product> Product { get; set; } = default!;
         public required DbSet<Inventory> Inventories { get; set; }
 
+        public required DbSet<FlowerInventory> FlowerInventories { get; set; }
+        public required DbSet<FlowerStock> FlowerStocks { get; set; }
+        public required DbSet<Asset> Assets { get; set; }
     }
 }

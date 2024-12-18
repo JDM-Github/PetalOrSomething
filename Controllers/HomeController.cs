@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PetalOrSomething.Data;
 using PetalOrSomething.Models;
 using System.Diagnostics;
 
@@ -6,11 +8,14 @@ namespace PetalOrSomething.Controllers
 {
     public class HomeController : Controller
     {
+
+        private readonly ApplicationDbContext _context;
         private readonly ILogger<HomeController> _logger;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context)
         {
             _logger = logger;
+            _context = context;
         }
 
         public IActionResult Index()
@@ -19,6 +24,11 @@ namespace PetalOrSomething.Controllers
             ViewData["UserId"] = userId;
             Console.WriteLine($"UserId: {ViewData["UserId"]}");
             _logger.LogInformation($"UserId: {ViewData["UserId"]}");
+
+            if (userId == "admin")
+            {
+                return RedirectToAction("Index", "Admin");
+            }
             return View();
         }
 
@@ -55,9 +65,18 @@ namespace PetalOrSomething.Controllers
             return View();
         }
 
-        public IActionResult ProductView()
+        public IActionResult ProductView(int id)
         {
-            return View();
+            var product = _context.FlowerInventories
+                                .Include(p => p.Stocks)
+                                .FirstOrDefault(p => p.Id == id);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            return View(product);
         }
 
         public IActionResult Cart()
@@ -72,5 +91,22 @@ namespace PetalOrSomething.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+
+        public IActionResult GetProducts()
+        {
+            var products = _context.FlowerInventories
+                .Select(f => new
+                {
+                    f.TotalStock,
+                    f.Id,
+                    f.Name,
+                    f.Model3DLink,
+                    f.Price,
+                    Rating = 4.5
+                }).ToList();
+
+            return Json(products);
+        }
+
     }
 }

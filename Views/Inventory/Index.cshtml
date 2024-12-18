@@ -1,41 +1,196 @@
-@model IEnumerable<PetalOrSomething.Models.Inventory>
+@model IEnumerable<PetalOrSomething.Models.FlowerInventory>
 
-@{
-    ViewData["Title"] = "Inventory List";
-}
+<div class="container mt-3">
+    <h1 class="h4 fw-bold mb-0">Flower Inventory</h1>
 
-<h2>@ViewData["Title"]</h2>
+    <!-- Product List Table -->
+    <div class="table-responsive">
+        <table class="table table-sm table-hover table-bordered text-center align-middle mb-0">
+            <thead class="table-secondary text-nowrap">
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Total Stock</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var inventory in Model)
+                {
+                    <tr>
+                        <td class="text-start">@inventory.Name</td>
+                        <td>@inventory.Price.ToString("C")</td>
+                        <td>@inventory.TotalStock</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewStocks(@inventory.Id)">
+                                View Stocks
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-<p>
-    <a class="btn btn-primary" href="@Url.Action("Create")">Create New Item</a>
-</p>
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-between mt-3">
+        <a href="@Url.Action("Create", "Inventory")" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle"></i> Add New Flower
+        </a>
+    </div>
+</div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Product Name</th>
-            <th>Description</th>
-            <th>Price</th>
-            <th>Stock Quantity</th>
-            <th>Category</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.ProductName</td>
-                <td>@item.Description</td>
-                <td>@item.Price</td>
-                <td>@item.StockQuantity</td>
-                <td>@item.Category</td>
-                <td>
-                    <a class="btn btn-info" href="@Url.Action("Details", new { id = item.Id })">Details</a>
-                    <a class="btn btn-warning" href="@Url.Action("Edit", new { id = item.Id })">Edit</a>
-                    <a class="btn btn-danger" href="@Url.Action("Delete", new { id = item.Id })">Delete</a>
-                </td>
-            </tr>
+<!-- Modal for Adding Stock -->
+<div class="modal fade" id="addStockModal" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addStockModalLabel">Add Stock to Flower</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addStockForm">
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="expiryDate" class="form-label">Expiry Date</label>
+                        <input type="date" class="form-control" id="expiryDate" required>
+                    </div>
+                    <input type="hidden" id="inventoryId">
+                    <div class="d-flex justify-content-between mt-3">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Add Stock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Viewing Stocks -->
+<div class="modal fade" id="viewStocksModal" tabindex="-1" aria-labelledby="viewStocksModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewStocksModalLabel">Stocks for Flower</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="stocksTableContainer"></div>
+                <div class="d-flex justify-content-between mt-3">
+                    <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary btn-sm" data-bs-dismiss="modal" onclick="showAddStockForm()">Add
+                        Stock</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedInventoryId = null;
+
+    function viewStocks(inventoryId) {
+        selectedInventoryId = inventoryId;
+        fetchStocks(inventoryId);
+    }
+
+    function fetchStocks(inventoryId) {
+        $.ajax({
+            url: '@Url.Action("GetStocks", "FlowerInventory")',
+            type: 'GET',
+            data: { inventoryId: inventoryId },
+            success: function (data) {
+                displayStocks(data);
+            },
+            error: function (xhr, status, error) {
+                console.error("Error fetching stocks:", xhr.responseText);
+            }
+        });
+    }
+
+    function displayStocks(stocks) {
+        let tableHtml = `<table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Quantity</th>
+                                    <th>Expiry Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+        stocks.forEach(stock => {
+            tableHtml += `<tr>
+                            <td>${stock.quantity}</td>
+                            <td>${new Date(stock.expiryDate).toLocaleDateString()}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger" onclick="removeStock(${stock.id})">Remove</button>
+                            </td>
+                        </tr>`;
+        });
+
+        tableHtml += `</tbody></table>`;
+        document.getElementById("stocksTableContainer").innerHTML = tableHtml;
+
+        // Show the modal
+        $('#viewStocksModal').modal('show');
+    }
+
+    function removeStock(stockId, expiryDate) {
+
+
+        if (confirm("Are you sure you want to remove this expired stock?")) {
+            $.ajax({
+                url: '@Url.Action("RemoveStock", "FlowerInventory")',
+                type: 'POST',
+                data: {
+                    stockId: stockId
+                },
+                success: function (response) {
+                    alert(response.message); // Success message from the controller
+                    location.reload(); // Reload to reflect changes
+                },
+                error: function (xhr, status, error) {
+                    alert('Failed to remove stock: ' + xhr.responseText);
+                }
+            });
         }
-    </tbody>
-</table>
+    }
+
+
+    function showAddStockForm() {
+        // Show modal to add stock
+        $('#addStockModal').modal('show');
+        document.getElementById("inventoryId").value = selectedInventoryId;
+    }
+
+    document.getElementById("addStockForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const quantity = document.getElementById("quantity").value;
+        const expiryDate = document.getElementById("expiryDate").value;
+        const inventoryId = document.getElementById("inventoryId").value;
+
+        $.ajax({
+            url: '@Url.Action("AddStock", "FlowerInventory")',
+            type: 'POST',
+            data: {
+                inventoryId: inventoryId,
+                quantity: quantity,
+                expiryDate: expiryDate
+            },
+            success: function () {
+                alert("Stock added successfully!");
+                $('#addStockModal').modal('hide');
+                fetchStocks(inventoryId);  // Refresh stock data after adding
+            },
+            error: function (xhr, status, error) {
+                console.error("Error response from server:", xhr.responseText);
+                alert("Failed to add stock.");
+            }
+        });
+    });
+</script>
