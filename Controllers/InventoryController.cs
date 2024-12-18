@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using PetalOrSomething.Models;
 using PetalOrSomething.Data;
 using Microsoft.EntityFrameworkCore;
+using InquiryManagementApp.Service;
 
 namespace PetalOrSomething.Controllers
 {
@@ -9,9 +10,11 @@ namespace PetalOrSomething.Controllers
     {
         private readonly ApplicationDbContext _context;
 
-        public InventoryController(ApplicationDbContext context)
+        public readonly FileUploadService _fileUploadService;
+        public InventoryController(ApplicationDbContext context, FileUploadService fileUploadService)
         {
             _context = context;
+            _fileUploadService = fileUploadService;
         }
 
         // GET: Inventory
@@ -31,10 +34,16 @@ namespace PetalOrSomething.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(FlowerInventory model)
+        public async Task<IActionResult> Create(FlowerInventory model, IFormFile Model3DFile, IFormFile Model2DImage)
         {
             if (ModelState.IsValid)
             {
+                var model3D = await _fileUploadService.UploadFileToCloudinaryAsync(Model3DFile);
+                model.Model3DLink = model3D;
+
+                var model2D = await _fileUploadService.UploadFileToCloudinaryAsync(Model2DImage);
+                model.Model2DLink = model2D;
+
                 _context.FlowerInventories.Add(model);
                 _context.SaveChanges();
                 return RedirectToAction("Index");

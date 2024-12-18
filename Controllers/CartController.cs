@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using PetalOrSomething.Data;
 using PetalOrSomething.Models;
+using PetalOrSomething.ViewModels;
 
 
 namespace PetalOrSomething.Controllers
@@ -50,25 +51,76 @@ namespace PetalOrSomething.Controllers
             return Ok(new { message = "Product added to cart successfully!" });
         }
 
-        public IActionResult Index()
+        public IActionResult CartItem()
         {
-            var userId = HttpContext.Session.GetString("UserId");
-            if (string.IsNullOrEmpty(userId))
-            {
-                return RedirectToAction("Login", "Accounts");
-            }
-
-            var cart = _context.Carts
-                .Where(c => c.UserId == userId)
-                .Select(c => new Cart
+            var cartItems = _context.CartItems
+            .Join(
+                _context.Account,
+                cart => cart.UserId,
+                user => user.Id,
+                (cart, user) => new CartItemWithUserViewModel
                 {
-                    Id = c.Id,
-                    UserId = c.UserId,
-                    Items = _context.CartItems.Where(i => i.CartId == c.Id).ToList()
+                    Model3DLink = cart.Model3DLink,
+                    Id = cart.Id,
+                    UserId = cart.UserId,
+                    UserFirstName = user.FirstName,
+                    UserLastName = user.LastName,
+                    UserEmail = user.Email,
+                    Quantity = cart.Quantity,
+                    ProductName = cart.ProductName,
+                    ProductPrice = (decimal)cart.Price,
                 })
-                .FirstOrDefault();
-
-            return View(cart ?? new Cart { UserId = userId });
+            .ToList();
+            return View(cartItems);
         }
+
+        public IActionResult CartFinished()
+        {
+            var cartItems = _context.CartFinishedItems
+                .Join(
+                    _context.FlowerInventories,
+                    cart => cart.ProductId,
+                    product => product.Id,
+                    (cart, product) => new CartItemViewModel
+                    {
+                        Id = cart.Id,
+                        UserId = cart.UserId,
+                        ProductId = cart.ProductId,
+                        Quantity = cart.Quantity,
+                        ProductName = product.Name,
+                        ProductPrice = product.Price,
+                        ProductDescription = product.Description
+                    }
+                )
+                .ToList();
+
+            return View(cartItems);
+        }
+
+
+        // public IActionResult Index()
+        // {
+        //     var userId = HttpContext.Session.GetString("UserId");
+        //     if (string.IsNullOrEmpty(userId))
+        //     {
+        //         return RedirectToAction("Login", "Accounts");
+        //     }
+
+        //     var cart = _context.Carts
+        //         .Where(c => c.UserId == userId)
+        //         .Select(c => new Cart
+        //         {
+        //             Id = c.Id,
+        //             UserId = c.UserId,
+        //             Items = _context.CartItems.Where(i => i.CartId == c.Id).ToList()
+        //         })
+        //         .FirstOrDefault();
+
+        //     return View(cart ?? new Cart { UserId = userId });
+        // }
+
+
+
+
     }
 }

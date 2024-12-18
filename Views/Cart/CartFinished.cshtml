@@ -1,0 +1,58 @@
+@model IEnumerable<PetalOrSomething.ViewModels.CartItemViewModel>
+
+@{
+    ViewData["Title"] = "Cart Summary";
+}
+
+<div class="container">
+    <h2 class="text-center text-primary">Your Cart</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center">
+            Your cart is empty. <a href="@Url.Action("Index", "Home")">Continue Shopping</a>
+        </div>
+    }
+    else
+    {
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th scope="col">Product Name</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Price per Unit</th>
+                    <th scope="col">Total Price</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ProductName</td>
+                        <td>@item.ProductDescription</td>
+                        <td>@item.Quantity</td>
+                        <td>₱@item.ProductPrice</td>
+                        <td>₱@item.TotalPrice</td>
+                        <td>
+                            <form method="post" action="@Url.Action("RemoveItem", "Home")" style="display:inline;">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-danger">Remove</button>
+                            </form>
+                            <form method="post" action="@Url.Action("PlaceOrder", "Home")">
+                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                <input type="hidden" name="quantity" value="@item.Quantity" />
+                                <button type="submit" class="btn btn-success">Order Now</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="text-center mt-4">
+            <a href="@Url.Action("Index", "Home")" class="btn btn-primary">Continue Shopping</a>
+        </div>
+    }
+</div>

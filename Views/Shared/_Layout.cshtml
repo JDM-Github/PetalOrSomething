@@ -124,8 +124,12 @@
                                     asp-action="Index">Assets</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Home"
-                                    asp-action="Orders">Orders</a>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Orders"
+                                    asp-action="Index">Orders</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Cart" asp-action="CartItem">Custom
+                                    Orders</a>
                             </li>
                         }
                         else
@@ -142,8 +146,14 @@
                                         asp-action="ProductEdit">Customize</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Cart" asp-action="Index">Cart</a>
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Cart"
+                                        asp-action="CartFinished">Cart</a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="CartItem">Custom
+                                        Orders</a>
+                                </li>
+
                             }
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Home"
@@ -155,6 +165,7 @@
 
                         }
                     </ul>
+
                     <ul class="navbar-nav">
                         @if (Context.Session.GetString("UserId") != null)
                         {
@@ -162,6 +173,14 @@
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Accounts" asp-action="Logout">Sign
                                     Out</a>
                             </li>
+                            if (Context.Session.GetString("UserId") != "admin")
+                            {
+                                <li class="nav-item">
+                                    <button type="button" data-bs-toggle="modal" data-bs-target="#accountModal">
+                                        Create/Update Account
+                                    </button>
+                                </li>
+                            }
                         }
                         else
                         {
@@ -188,6 +207,57 @@
             @RenderBody()
         </main>
     </div>
+
+    <!-- Modal for Account -->
+    <div class="modal fade" id="accountModal" tabindex="-1" aria-labelledby="accountModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="accountModalLabel">Create/Update Account</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="accountForm" method="post" action="@Url.Action("CreateOrUpdateAccount", "Home")">
+                        <div class="mb-3">
+                            <label for="firstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="firstName" name="FirstName" required
+                                value="@Context.Session.GetString("FirstName")">
+                        </div>
+                        <div class="mb-3">
+                            <label for="middleName" class="form-label">Middle Name</label>
+                            <input type="text" class="form-control" id="middleName" name="MiddleName"
+                                value="@Context.Session.GetString("MiddleName")">
+                        </div>
+                        <div class="mb-3">
+                            <label for="lastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="lastName" name="LastName" required
+                                value="@Context.Session.GetString("LastName")">
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="Email" required
+                                value="@Context.Session.GetString("Email")">
+                        </div>
+                        <div class="mb-3">
+                            <label for="phoneNumber" class="form-label">Phone Number</label>
+                            <input type="text" class="form-control" id="phoneNumber" name="PhoneNumber" required
+                                value="@Context.Session.GetString("PhoneNumber")">
+                        </div>
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="location" name="Location" required
+                                value="@Context.Session.GetString("Location")">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 
 

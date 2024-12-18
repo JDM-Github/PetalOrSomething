@@ -1,0 +1,41 @@
+@model IEnumerable<PetalOrSomething.Models.Order>
+
+@{
+    ViewData["Title"] = "Orders List";
+}
+
+<div class="container mt-5">
+    <h2 class="text-center text-primary">Orders List</h2>
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th scope="col">Order ID</th>
+                <th scope="col">Customer</th>
+                <th scope="col">Product</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Total Price</th>
+                <th scope="col">Order Date</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td>@order.Id</td>
+                    <td>@order.User?.FirstName @order.User?.LastName</td>
+                    <td>@order.Product?.Name</td>
+                    <td>@order.Quantity</td>
+                    <td>₱@order.TotalPrice</td>
+                    <td>@order.OrderDate.ToString("g")</td>
+                    <td>
+                        <form method="post" action="@Url.Action("CancelOrder", "Orders")">
+                            <input type="hidden" name="orderId" value="@order.Id" />
+                            <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

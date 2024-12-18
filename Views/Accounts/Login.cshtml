@@ -2,6 +2,9 @@
 
 @{
     ViewData["Title"] = "Login";
+
+    var registerString = Context.Session.GetString("Registered");
+    Context.Session.Remove("Registered");
 }
 
 <div class="d-flex flex-column flex-md-row vh-70">
@@ -54,9 +57,25 @@ background-image: url('https://img.freepik.com/premium-photo/vintage-cash-regist
             </div>
         </div>
     </div>
+
+    @if (registerString != "" && registerString != null)
+    {
+        <div id="successMessage"
+            style="color: white; padding:20px; border-radius: 20px; position: fixed; top: 10px; left: 50%; transform: translateX(-50%); width: 300px; background-color: green;">
+            Registered successfully
+        </div>
+    }
 </div>
 
 @section Scripts {
+    <script>
+        var successMessage = document.getElementById('successMessage');
+        if (successMessage) {
+            setTimeout(function () {
+                successMessage.style.display = 'none';
+            }, 2000);
+        }
+    </script>
     <script>
         function togglePassword() {
             const passwordInput = document.getElementById('passwordInput');

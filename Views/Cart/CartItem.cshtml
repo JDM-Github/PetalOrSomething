@@ -1,0 +1,51 @@
+@model IEnumerable<PetalOrSomething.ViewModels.CartItemWithUserViewModel>
+
+@{
+    ViewData["Title"] = "Cart Items";
+}
+
+<div class="container">
+    <h2 class="text-center text-primary">Custom Orders</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th scope="col">Username</th>
+                <th scope="col">Email</th>
+                <th scope="col">Product Name</th>
+                <th scope="col">3D Model</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Price</th>
+                <th scope="col">Total</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.UserFirstName @item.UserLastName</td>
+                    <td>@item.UserEmail</td>
+                    <td>@item.ProductName</td>
+                    <td>
+                        <a href="@Url.Action("View3D", "Admin", new { modelUrl = item.Model3DLink })" target="_blank">View
+                            3D Model</a>
+                    </td>
+                    <td>@item.Quantity</td>
+                    <td>₱@item.ProductPrice</td>
+                    <td>₱@(@item.Quantity * item.ProductPrice)</td>
+                    <td>
+                        <form method="post" action="@Url.Action("RemoveItem", "Home")">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button type="submit" class="btn btn-danger">Complete</button>
+                        </form>
+                        <form method="post" action="@Url.Action("RemoveItem", "Home")">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button type="submit" class="btn btn-danger">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</div>

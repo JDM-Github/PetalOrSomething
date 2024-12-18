@@ -10,20 +10,23 @@
             <h5 class="fw-bold mb-0">Add New Flower Inventory</h5>
         </div>
         <div class="card-body">
-            <form asp-action="Create" method="post">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label asp-for="Name" class="form-label">Flower Name</label>
                     <input asp-for="Name" class="form-control" placeholder="Enter flower name" required />
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Model3DLink" class="form-label">3D Model Link</label>
-                    <input asp-for="Model3DLink" class="form-control" placeholder="Enter 3D model URL" />
+                    <label class="form-label" for="Model3DFile">3D Model File</label>
+                    <input type="file" class="form-control" id="Model3DFile" name="Model3DFile"
+                        accept=".glb, .gltf, .obj, .fbx, .stl" />
+                    <div class="form-text">Upload the 3D model file (GLB, GLTF, OBJ, FBX, STL).</div>
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Model2DLink" class="form-label">2D Model Link</label>
-                    <input asp-for="Model2DLink" class="form-control" placeholder="Enter 2D model URL" />
+                    <label class="form-label" for="Model2DImage">2D Image</label>
+                    <input type="file" class="form-control" id="Model2DImage" name="Model2DImage" accept="image/*" />
+                    <div class="form-text">Upload a 2D image (JPG, PNG, etc.).</div>
                 </div>
 
                 <div class="mb-3">

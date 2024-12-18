@@ -15,6 +15,13 @@ namespace PetalOrSomething.Controllers
             _context = context;
         }
 
+
+        public IActionResult View3D(string modelUrl)
+        {
+            ViewData["ModelUrl"] = modelUrl;
+            return View();
+        }
+
         public IActionResult Index()
         {
             var flowerInventories = _context.FlowerInventories
@@ -43,6 +50,6 @@ namespace PetalOrSomething.Controllers
 
             return View(model);
         }
-    
+
     }
 }

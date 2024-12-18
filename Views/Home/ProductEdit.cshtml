@@ -1,3 +1,7 @@
+@{
+    Layout = null;
+}
+
 @model IEnumerable<PetalOrSomething.Models.Product>
 <style>
     #myCanvas {
@@ -314,16 +318,49 @@
                     <label for="meshSelect">Select Mesh:</label>
                     <div id="meshListContainer"></div>
                 </div>
-
                 <button id="saveGlbBtn" class="tool-btn">
                     <span>Save GLB</span>
                 </button>
-                <a asp-controller="Cart" asp-action="Index" id="addToCart" class="tool-btn">
-                    <span>Add to Cart</span>
-                </a>
+
+                <form id="cartForm" method="post" action="@Url.Action("AddToCart", "Home")"
+                    enctype="multipart/form-data">
+                    <input type="file" id="glbFile" name="GLBFile" accept=".glb" style="display:none" />
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label" style="font-size: 1.2rem;">Product Name</label>
+                        <input type="text" id="name" name="Name" class="form-control"
+                            style="font-size: 1.2rem; padding: 10px;" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label" style="font-size: 1.2rem;">Quantity</label>
+                        <input type="number" id="quantity" name="Quantity" class="form-control"
+                            style="font-size: 1.2rem; padding: 10px;" min="1" required />
+                    </div>
+
+
+                    <button id="addToCart" class="tool-btn" type="button">
+                        <span>Order Product</span>
+                    </button>
+                </form>
+
+                @* <script>
+                    document.getElementById("chooseFile").addEventListener("click", function () {
+                        document.getElementById("glbFile").click();
+                    });
+
+                    document.getElementById("glbFile").addEventListener("change", function () {
+                        if (this.files.length > 0) {
+                            document.getElementById("chooseFile").innerText = "File Selected";
+                        }
+                    });
+                </script> *@
+
+
+
                 <button class="tool-btn">
                     <span>Close</span>
-                    <a class="btn btn-primary" asp-controller="Home" asp-action="ProductView">Close</a>
+                    <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Close</a>
                 </button>
             </div>
         </div>
@@ -923,6 +960,42 @@
 
             scene.add(gridHelper);
         });
+        @* 
+        document.getElementById('saveGlbBtn').addEventListener('click', function () {
+            scene.remove(gridHelper);
+
+            const exporter = new THREE.GLTFExporter();
+            exporter.parse(scene, function (result) {
+                const blob = new Blob([result], { type: 'application/octet-stream' });
+                const file = new File([blob], 'model.glb', { type: 'application/octet-stream' });
+
+                const glbFileInput = document.getElementById('glbFile');
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                glbFileInput.files = dataTransfer.files;
+
+                document.getElementById('cartForm').submit();
+            }, { binary: true });
+            scene.add(gridHelper);
+        }); *@
+
+            document.getElementById('addToCart').addEventListener('click', function () {
+                scene.remove(gridHelper);
+
+                const exporter = new THREE.GLTFExporter();
+                exporter.parse(scene, function (result) {
+                    const blob = new Blob([result], { type: 'application/octet-stream' });
+                    const file = new File([blob], 'model.glb', { type: 'application/octet-stream' });
+
+                    const glbFileInput = document.getElementById('glbFile');
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    glbFileInput.files = dataTransfer.files;
+
+                    document.getElementById('cartForm').submit();
+                }, { binary: true });
+                scene.add(gridHelper);
+            });
 
         init();
     </script>

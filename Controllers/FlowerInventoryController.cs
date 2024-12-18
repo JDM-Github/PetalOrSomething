@@ -73,12 +73,5 @@ namespace PetalOrSomething.Controllers
             return Json(new { success = true, message = "Stock removed successfully!" });
         }
 
-        [HttpPost]
-        public IActionResult AddItem([FromBody] Cart item)
-        {
-            return Json(new { success = true, message = "Stock removed successfully!" });
-        }
-
-
     }
 }

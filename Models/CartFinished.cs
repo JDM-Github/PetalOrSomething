@@ -4,24 +4,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PetalOrSomething.Models
 {
-    public class CartItem
+    public class CartFinished
     {
-        public CartItem(string model3DLink, int userId, string productName, int quantity)
+        public CartFinished(int userId, int productId, int quantity)
         {
-            Model3DLink = model3DLink;
             UserId = userId;
+            ProductId = productId;
             Quantity = quantity;
-            ProductName = productName;
         }
 
         [Key]
         public int Id { get; set; }
-
         public int UserId { get; set; }
-        public string Model3DLink { get; set; }
-
-        public double Price { get; set; } = 0;
-        public string ProductName { get; set; }
+        public int ProductId { get; set; }
         public int Quantity { get; set; }
     }
 }
+

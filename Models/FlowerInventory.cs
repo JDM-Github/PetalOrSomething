@@ -23,8 +23,8 @@ namespace PetalOrSomething.Models
         [Key]
         public int Id { get; set; }
         public string Name { get; set; }
-        public string Model3DLink { get; set; }
-        public string Model2DLink { get; set; }
+        public string Model3DLink { get; set; } = "";
+        public string Model2DLink { get; set; } = "";
         public string Description { get; set; } = "";
         public decimal Rating { get; set; } = 4.5M;
         public decimal Price { get; set; }

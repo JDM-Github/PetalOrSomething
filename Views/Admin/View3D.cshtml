@@ -1,4 +1,8 @@
-﻿<style>
+﻿@{
+	ViewData["Title"] = "View 3D Model";
+	var modelUrl = ViewData["ModelUrl"] as string;
+}
+<style>
 	#myCanvas {
 		position: absolute;
 		top: 0;
@@ -277,7 +281,7 @@
 	<script src="https://unpkg.com/three@0.139.2/examples/js/loaders/GLTFLoader.js"></script>
 	<script src="https://unpkg.com/three@0.139.2/examples/js/controls/OrbitControls.js"></script>
 
-	<a asp-area="" asp-controller="Home" asp-action="ProductView" class="top-btn btn btn-pink w-100 rounded-pill">Go
+	<a asp-area="" asp-controller="Cart" asp-action="CartItem" class="top-btn btn btn-pink w-100 rounded-pill">Go
 		Back</a>
 	<div id="mainContainer">
 		<div id="canvasContainer">
@@ -358,9 +362,9 @@
 			scene.background = new THREE.Color(0xeeeeee);
 
 			const loader = new THREE.GLTFLoader();
-			loader.load("/models/papa_meilland_rose.glb", (gltf) => {
+			loader.load("@modelUrl", (gltf) => {
 				model = gltf.scene;
-				model.scale.set(30, 30, 30);
+				model.scale.set(1, 1, 1);
 				model.position.set(0, 0, 0);
 				scene.add(model);
 				console.log("Model Loaded Successfully");

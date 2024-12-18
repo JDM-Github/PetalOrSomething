@@ -22,7 +22,6 @@ namespace InquiryManagementApp.Service
             {
                 return "";
             }
-
             try
             {
                 using (var stream = file.OpenReadStream())

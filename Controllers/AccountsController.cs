@@ -67,6 +67,8 @@ namespace PetalOrSomething.Controllers
 
                 _context.Add(account);
                 await _context.SaveChangesAsync();
+
+                HttpContext.Session.SetString("Registered", "Registration Success");
                 return RedirectToAction("Login", "Accounts");
             }
             return View(account);
@@ -113,9 +115,15 @@ namespace PetalOrSomething.Controllers
                 }
 
                 HttpContext.Session.SetString("UserId", account.Id.ToString());
-                HttpContext.Session.SetString("UserName", $"{account.FirstName} {account.LastName}");
-                ViewData["UserId"] = account.Id.ToString(); // Optionally, set this to share in your views
+                // HttpContext.Session.SetString("UserName", $"{account.FirstName} {account.LastName}");
+                HttpContext.Session.SetString("FirstName", account.FirstName ?? "");
+                HttpContext.Session.SetString("MiddleName", account.MiddleName ?? "");
+                HttpContext.Session.SetString("LastName", account.LastName ?? "");
+                HttpContext.Session.SetString("Email", account.Email ?? "");
+                HttpContext.Session.SetString("PhoneNumber", account.PhoneNumber ?? "");
+                HttpContext.Session.SetString("Location", account.Location ?? "");
 
+                ViewData["UserId"] = account.Id.ToString();
                 return RedirectToAction("Index", "Home");
             }
 

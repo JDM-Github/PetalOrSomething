@@ -12,7 +12,7 @@ using PetalOrSomething.Data;
 namespace PetalOrSomething.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241218050937_InitialUpdate")]
+    [Migration("20241218212358_InitialUpdate")]
     partial class InitialUpdate
     {
         /// <inheritdoc />
@@ -227,26 +227,6 @@ namespace PetalOrSomething.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Order", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CartItemIds")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("OrderDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Orders");
-                });
-
             modelBuilder.Entity("PetalOrSomething.Models.Account", b =>
                 {
                     b.Property<int>("Id")
@@ -311,7 +291,7 @@ namespace PetalOrSomething.Migrations
                     b.ToTable("Assets");
                 });
 
-            modelBuilder.Entity("PetalOrSomething.Models.Cart", b =>
+            modelBuilder.Entity("PetalOrSomething.Models.CartFinished", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -319,13 +299,18 @@ namespace PetalOrSomething.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Carts");
+                    b.ToTable("CartFinishedItems");
                 });
 
             modelBuilder.Entity("PetalOrSomething.Models.CartItem", b =>
@@ -336,18 +321,12 @@ namespace PetalOrSomething.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CartId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Image")
+                    b.Property<string>("Model3DLink")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Price")
                         .HasColumnType("float");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
 
                     b.Property<string>("ProductName")
                         .IsRequired()
@@ -356,9 +335,10 @@ namespace PetalOrSomething.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
-                    b.HasIndex("CartId");
+                    b.HasKey("Id");
 
                     b.ToTable("CartItems");
                 });
@@ -451,6 +431,38 @@ namespace PetalOrSomething.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Inventories");
+                });
+
+            modelBuilder.Entity("PetalOrSomething.Models.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("OrderDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("PetalOrSomething.Models.Product", b =>
@@ -552,17 +564,6 @@ namespace PetalOrSomething.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("PetalOrSomething.Models.CartItem", b =>
-                {
-                    b.HasOne("PetalOrSomething.Models.Cart", "Cart")
-                        .WithMany("Items")
-                        .HasForeignKey("CartId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Cart");
-                });
-
             modelBuilder.Entity("PetalOrSomething.Models.FlowerStock", b =>
                 {
                     b.HasOne("PetalOrSomething.Models.FlowerInventory", "FlowerInventory")
@@ -574,9 +575,23 @@ namespace PetalOrSomething.Migrations
                     b.Navigation("FlowerInventory");
                 });
 
-            modelBuilder.Entity("PetalOrSomething.Models.Cart", b =>
+            modelBuilder.Entity("PetalOrSomething.Models.Order", b =>
                 {
-                    b.Navigation("Items");
+                    b.HasOne("PetalOrSomething.Models.FlowerInventory", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PetalOrSomething.Models.Account", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PetalOrSomething.Models.FlowerInventory", b =>

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using PetalOrSomething.Data;
 using CloudinaryDotNet;
+using InquiryManagementApp.Service;
 
 //public void ConfigureServices(IServiceCollection services)
 //{
@@ -38,6 +39,8 @@ var account = new Account(
 );
 var cloudinary = new Cloudinary(account);
 builder.Services.AddSingleton(cloudinary);
+
+builder.Services.AddTransient<FileUploadService>();
 
 var app = builder.Build();
 
