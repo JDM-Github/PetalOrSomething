@@ -108,5 +108,36 @@ namespace PetalOrSomething.Controllers
             return Json(products);
         }
 
+        [HttpPost]
+        public IActionResult AddItem([FromBody] CartItem item)
+        {
+            var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            var cart = _context.Carts.FirstOrDefault(c => c.UserId == userId);
+            if (cart == null)
+            {
+                cart = new Cart { UserId = userId };
+                _context.Carts.Add(cart);
+                _context.SaveChanges();
+            }
+
+            var existingItem = _context.CartItems.FirstOrDefault(i => i.CartId == cart.Id && i.ProductId == item.ProductId);
+            if (existingItem != null)
+            {
+                existingItem.Quantity += item.Quantity;
+            }
+            else
+            {
+                item.CartId = cart.Id;
+                _context.CartItems.Add(item);
+            }
+
+            _context.SaveChanges();
+            return Ok(new { message = "Product added to cart successfully!" });
+        }
     }
 }

@@ -6,6 +6,7 @@ namespace PetalOrSomething.Data
 {
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext(options)
     {
+        public required DbSet<Order> Orders { get; set; }
         public required DbSet<Account> Account { get; set; } = default!;
         public required DbSet<Cart> Carts { get; set; }
         public required DbSet<CartItem> CartItems { get; set; }

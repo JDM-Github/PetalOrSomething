@@ -69,15 +69,15 @@
 <script>
 	function addToCart(productId, productName, price, quantity, image) {
 		const cartItem = {
-			productId: productId,
-			productName: productName,
-			price: parseFloat(price),
-			quantity: parseInt(quantity),
-			image: image
+			ProductId: productId,
+			ProductName: productName,
+			Price: parseFloat(price),
+			Quantity: parseInt(quantity),
+			Image: image
 		};
 
 		$.ajax({
-			url: '@Url.Action("AddItem", "Cart")',
+			url: '@Url.Action("AddItem", "Home")',
 			type: 'POST',
 			contentType: 'application/json',
 			data: JSON.stringify(cartItem),
