@@ -1,0 +1,37 @@
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h1 class="h5 fw-bold mb-0 border-start border-3 border-danger ps-3">VERIFY YOUR ACCOUNT</h1>
+                </div>
+                <div class="card-body">
+                    <p class="text-center">
+                        An email with a verification code was sent to: <strong>@ViewData["Email"]</strong>.
+                    </p>
+                    <form asp-action="Verify" method="post">
+                        <input type="hidden" name="Email" value="@ViewData["Email"]" />
+                        <div class="form-group mb-3">
+                            <label for="VerificationCode" class="form-label">Verification Code</label>
+                            <input type="text" name="VerificationCode" class="form-control"
+                                placeholder="Enter verification code" required />
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn text-white"
+                                style="background-color: #5f4b8b !important;">Verify</button>
+                        </div>
+                    </form>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a asp-action="Login" class="btn btn-outline-danger text-decoration-none">Back to Login</a>
+                        <form asp-action="ResendCode" method="post" class="d-inline">
+                            <input type="hidden" name="Email" value="@ViewData["Email"]" />
+                            <button type="submit" class="btn btn-outline-secondary text-decoration-none">Resend
+                                Code</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

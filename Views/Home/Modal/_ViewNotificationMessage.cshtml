@@ -1,0 +1,39 @@
+<div class="modal fade" id="viewNotification" tabindex="-1" aria-labelledby="viewNotificationLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h1 class="h5 fw-bold mb-0 border-start border-3 border-danger ps-3">VIEW NOTIFICATION</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input id="notificationTitle" type="text" class="form-control form-control-lg" readonly />
+                </div>
+                <div class="mb-3">
+                    <textarea id="notificationMessage" class="form-control" rows="5" readonly
+                        style="resize: none;"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var viewNotification = document.getElementById('viewNotification');
+        viewNotification.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var notifTitle = button.getAttribute('data-title');
+            var notifMessage = button.getAttribute('data-message');
+
+            var nTitle = viewNotification.querySelector('#notificationTitle');
+            nTitle.value = notifTitle;
+
+            var nMessage = viewNotification.querySelector('#notificationMessage');
+            nMessage.textContent = notifMessage;
+        });
+    });
+</script>

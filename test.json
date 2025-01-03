@@ -1,0 +1,138 @@
+// {
+// 	"data": {
+// 		"attributes": {
+// 			"billing": {
+// 				"address": {
+// 					"line1": "Parian, Calamba Laguna",
+// 					"city": "Calamba City",
+// 					"state": "Laguna",
+// 					"postal_code": "4027",
+// 					"country": "PH"
+// 				},
+// 				"name": "JD C JDMaster",
+// 				"email": "jdmaster888@gmail.com",
+// 				"phone": ""
+// 			},
+// 			"send_email_receipt": true,
+// 			"show_description": true,
+// 			"show_line_items": true,
+// 			"payment_method_types": [
+// 				"qrph",
+// 				"billease",
+// 				"card",
+// 				"dob",
+// 				"dob_ubp",
+// 				"brankas_bdo",
+// 				"gcash",
+// 				"brankas_landbank",
+// 				"brankas_metrobank",
+// 				"grab_pay",
+// 				"paymaya"
+// 			],
+// 			"line_items": {
+// 				"currency": "PHP",
+// 				"images": [
+// 					"https://cdn-icons-png.flaticon.com/512/5166/5166991.png"
+// 				],
+// 				"amount": 300000.0,
+// 				"name": "Payment Fee",
+// 				"quantity": 1,
+// 				"description": "Payment fee for tuition"
+// 			},
+// 			"description": "Payment for school tuition",
+// 			"reference_number": "0fbef201-7e40-4580-9502-02e6b9610614",
+// 			"statement_descriptor": "Inquiry Management",
+// 			"success_url": "http://localhost:5283/Payment/PaymentSuccess?reference=0fbef201-7e40-4580-9502-02e6b9610614",
+// 			"cancel_url": "http://localhost:5283/Payment/PaymentCancelled?reference=0fbef201-7e40-4580-9502-02e6b9610614"
+// 		}
+// 	}
+// }
+
+
+// // {
+// // 	"data": {
+// // 		"attributes": {
+// // 			"send_email_receipt": true,
+// // 			"show_description": true,
+// // 			"show_line_items": true,
+// // 			"payment_method_types": ["gcash"],
+// // 			"line_items": [
+// // 				{
+// // 					"currency": "PHP",
+// // 					"images": [
+// // 						"https://res.cloudinary.com/djheiqm47/image/upload/v1735494736/your-folder-name/pec5gdaich8yveukmvni.jpg"
+// // 					],
+// // 					"amount": 50000,
+// // 					"name": "Three headed flower",
+// // 					"quantity": 5,
+// // 					"description": "Test Description"
+// // 				}
+// // 			],
+// // 			"description": "Payment for selected products",
+// // 			"reference_number": "605b761e-3103-46cb-980f-3c00643d5bd9",
+// // 			"statement_descriptor": "Petal and Planes",
+// // 			"success_url": "http://localhost:5269/Cart/PaymentSuccess?reference=605b761e-3103-46cb-980f-3c00643d5bd9",
+// // 			"cancel_url": "/Cart/PaymentCancelled?Length=4"
+// // 		}
+// // 	}
+// // }
+
+// // {
+// // 	"data": {
+// // 		"attributes": {
+// // 			"billing": {
+// // 				"address": {
+// // 					"line1": "Parian Laguna",
+// // 					"city": "Calamba City",
+// // 					"state": "Laguna",
+// // 					"postal_code": "4027",
+// // 					"country": "PH"
+// // 				},
+// // 				"name": "JD C JDMaster",
+// // 				"email": "jdmaster888@gmail.com",
+// // 				"phone": "09303238796"
+// // 			},
+// // 			"send_email_receipt": true,
+// // 			"show_description": true,
+// // 			"show_line_items": true,
+// // 			"payment_method_types": [
+// // 				"qrph",
+// // 				"billease",
+// // 				"card",
+// // 				"dob",
+// // 				"dob_ubp",
+// // 				"brankas_bdo",
+// // 				"gcash",
+// // 				"brankas_landbank",
+// // 				"brankas_metrobank",
+// // 				"grab_pay",
+// // 				"paymaya"
+// // 			],
+// // 			"line_items": [
+// // 				{
+// // 					"currency": "PHP",
+// // 					"images": [""],
+// // 					"amount": 10000,
+// // 					"name": "Test",
+// // 					"quantity": 50,
+// // 					"description": "Full payment for this product"
+// // 				},
+// // 				{
+// // 					"currency": "PHP",
+// // 					"images": [
+// // 						"https://cdn-icons-png.flaticon.com/512/5166/5166991.png"
+// // 					],
+// // 					"amount": 2500,
+// // 					"name": "Shipping Fee",
+// // 					"quantity": 1,
+// // 					"description": "Shipping fee for your order"
+// // 				}
+// // 			],
+// // 			"description": "Payment for selected products",
+// // 			"reference_number": "1c59982e-e84a-4815-8acb-cd2f161a1769",
+// // 			"statement_descriptor": "Petal and Planes",
+// // 			"success_url": "http://localhost:5269/Cart/PaymentCustomSuccess?reference=1c59982e-e84a-4815-8acb-cd2f161a1769",
+// // 			"cancel_url": "http://localhost:5269/Cart/PaymentCustomCancelled?reference=1c59982e-e84a-4815-8acb-cd2f161a1769"
+// // 		}
+// // 	}
+// // }

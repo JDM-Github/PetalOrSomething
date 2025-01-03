@@ -40,6 +40,7 @@ namespace PetalOrSomething.Controllers
             var inventory = _context.FlowerInventories.FirstOrDefault(i => i.Id == inventoryId);
             if (inventory == null)
             {
+                TempData["ErrorMessage"] = "Inventory not found for the given ID.";
                 return NotFound();
             }
 
@@ -53,6 +54,7 @@ namespace PetalOrSomething.Controllers
             inventory.Stocks.Add(stock);
             _context.SaveChanges();
 
+            TempData["SuccessMessage"] = "Stock added successfully!";
             return Json(new { success = true });
         }
 

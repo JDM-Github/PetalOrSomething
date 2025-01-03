@@ -1,51 +1,334 @@
-@model IEnumerable<PetalOrSomething.ViewModels.CartItemWithUserViewModel>
+@model CartItemViewUserModel
 
 @{
     ViewData["Title"] = "Cart Items";
 }
 
-<div class="container">
-    <h2 class="text-center text-primary">Custom Orders</h2>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th scope="col">Username</th>
-                <th scope="col">Email</th>
-                <th scope="col">Product Name</th>
-                <th scope="col">3D Model</th>
-                <th scope="col">Quantity</th>
-                <th scope="col">Price</th>
-                <th scope="col">Total</th>
-                <th scope="col">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.UserFirstName @item.UserLastName</td>
-                    <td>@item.UserEmail</td>
-                    <td>@item.ProductName</td>
-                    <td>
-                        <a href="@Url.Action("View3D", "Admin", new { modelUrl = item.Model3DLink })" target="_blank">View
-                            3D Model</a>
-                    </td>
-                    <td>@item.Quantity</td>
-                    <td>₱@item.ProductPrice</td>
-                    <td>₱@(@item.Quantity * item.ProductPrice)</td>
-                    <td>
-                        <form method="post" action="@Url.Action("RemoveItem", "Home")">
-                            <input type="hidden" name="id" value="@item.Id" />
-                            <button type="submit" class="btn btn-danger">Complete</button>
-                        </form>
-                        <form method="post" action="@Url.Action("RemoveItem", "Home")">
-                            <input type="hidden" name="id" value="@item.Id" />
-                            <button type="submit" class="btn btn-danger">Reject</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+<div class="container" style="margin-top: -5px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h1 class="h5 fw-bold mb-0 border-start border-3 border-danger ps-3">CUSTOM ORDERED CART</h1>
+            <div class="d-flex align-items-center gap-2">
+                <a href="@Url.Action("Create", "Inventory")" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash"></i> DELETE SELECTED
+                </a>
+                <button class="text-white btn btn-light btn-sm" style="background-color: #5f4b8b !important;"
+                    onclick="placeOrder()">
+                    <i class="bi bi-plus-circle"></i> PLACE ORDER
+                </button>
+            </div>
+        </div>
+
+        <div class="row m-1">
+            <div class="mb-3 d-flex align-items-center">
+                <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search"
+                    value="@Model.SearchFilter">
+                <button type="button" class="btn btn-sm btn-secondary ms-2" onclick="applyFilters()">Search</button>
+            </div>
+            <div class="col-md-9 mb-3">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered text-center align-middle mb-0">
+                        <thead class="table-secondary text-nowrap" style="color:#221E2C66 !important">
+                            <tr>
+                                <th scope="col"></th>
+                                <th scope="col">PRODUCT NAME</th>
+                                <th scope="col">3D MODEL</th>
+                                <th scope="col">QUANTITY</th>
+                                <th scope="col">PRICE</th>
+                                <th scope="col">TOTAL</th>
+                                <th scope="col">ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td><input type="checkbox" class="selectItem" name="selectedItems" value="@item.Id"
+                                        @(item.Selected ? "checked" : "") onchange="selectItem(@item.Id)"
+                                            style="width: 20px; height: 20px; accent-color: red;" />
+                                    </td>
+                                    <td>
+                                        <p><strong>@item.ProductName</strong></p>
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(item.Model3DLink))
+                                        {
+                                            <model-viewer src="@item.Model3DLink" style="width: auto; height: 100px;"
+                                                camera-controls auto-rotate ar
+                                                alt="3D Model of @item.ProductName"></model-viewer>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No 3D Model</span>
+                                        }
+                                    </td>
+                                    <td>@item.Quantity</td>
+                                    <td>₱@item.TotalPrice</td>
+                                    <td class="item-total-price">₱@(@item.Quantity * item.TotalPrice)</td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <a href="@Url.Action("View3D", "Admin", new { modelUrl = item.Model3DLink, note = item.Note, customization = item.CustomizationJson })"
+                                                type="submit" class="btn btn-outline-primary">View</a>
+                                            <a href="@Url.Action("EditDesign", "Home", new { ids = item.Id, name = item.ProductName, quantity = item.Quantity, note = item.Note, customization = item.CustomizationJson })"
+                                                type="submit" class="btn btn-outline-success">Edit</a>
+
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.Id"
+                                                data-name="@item.ProductName" data-model3d="@item.Model3DLink">
+                                                Delete
+                                            </button>
+
+                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
+                                                data-bs-target="#viewNotification-@item.Id">
+                                                View Note
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <div class="modal fade" id="viewNotification-@item.Id" tabindex="-1"
+                                    aria-labelledby="viewNotification-@item.Id-Label" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div
+                                                class="card-header bg-light d-flex justify-content-between align-items-center">
+                                                <h1 class="h5 fw-bold mb-0 border-start border-3 border-danger ps-3">
+                                                    VIEW NOTE</h1>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <textarea id="notificationMessage" class="form-control" rows="5"
+                                                        readonly style="resize: none;">@item.Note</textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h1 class="h5 fw-bold mb-0 border-start border-3 border-danger ps-3">ORDER SUMMARY</h1>
+                    </div>
+                    <div class="card-body">
+                        <div><strong>User:</strong> @Model.UserName</div>
+                        <div><strong>Email:</strong> @Model.Email</div>
+                        <div><strong>Location:</strong> @Model.UserLocation</div>
+                        <div><strong>Phone:</strong> @Model.UserPhoneNumber</div>
+
+                        <hr />
+
+                        <h5>Selected Items:</h5>
+                        <div id="selectedItemsList" class="d-flex flex-wrap gap-2 overflow-auto p-2"
+                            style="max-height: 150px;">
+                        </div>
+                        <hr>
+
+                        <div class="mb-1">
+                            <label for="orderType" class="form-label">Order Type</label>
+                            <select id="orderType" class="form-select" onchange="updateSummary()" asp-for="WillPickUp">
+                                <option value="Pickup">Pickup</option>
+                                <option value="Delivery">Delivery</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-1">
+                            <label for="paymentType" class="form-label">Payment Type</label>
+                            <select id="paymentType" class="form-select" onchange="toggleDownPaymentInput()" asp-for="
+                                PaymentType">
+                                <option value="Full">Full Payment</option>
+                                <option value="Partial">Partial Payment</option>
+                            </select>
+                        </div>
+                        <div id="downPaymentDiv" class="mb-1" style="display: none;">
+                            <label for="downPaymentPercentage" class="form-label">Down Payment Percentage</label>
+                            <input type="number" id="downPaymentPercentage" class="form-control" min="20" max="100"
+                                value="@Model.DownPaymentPercentage" placeholder="Enter down payment percentage"
+                                onchange="updateDownPayment()" />
+                            <small id="downPaymentError" class="text-danger" style="display: none;">Minimum down
+                                payment
+                                is 20%</small>
+                        </div>
+
+                        <hr />
+                        <div class="total-amount">
+                            <strong>Total: ₱<span id="totalAmount">0.00</span></strong><br />
+                            <hr>
+                            <strong>Shipping Fee: ₱<span id="shippingFee">0.00</span></strong><br />
+                            <strong>Down Payment: ₱<span id="downPayment">0.00</span></strong><br />
+                            <strong>Remaining Balance: ₱<span id="remainingBalance">0.00</span></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <div class="text-left">
+                <span>Showing @Model.StartIndex to @Model.EndIndex of @Model.TotalCount items</span>
+            </div>
+
+            <nav>
+                <ul class="pagination justify-content-end mb-0">
+                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link"
+                            href="@Url.Action("CartItem", new { page = Model.CurrentPage - 1, search = Model.SearchFilter })"
+                            aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link"
+                                href="@Url.Action("CartItem", new { page = i, search = Model.SearchFilter })"
+                                style="color: white; border-color: #5f4b8b; background-color: #5f4b8b;">
+                                @i
+                            </a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link"
+                            href="@Url.Action("CartItem", new { page = Model.CurrentPage + 1, search = Model.SearchFilter })"
+                            aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+
+
+    </div>
 
 </div>
+
+@await Html.PartialAsync("Modal/_DeleteCartItem");
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+<script>
+    const itemCheckboxes = document.querySelectorAll(".selectItem");
+    const selectedItemsList = document.getElementById("selectedItemsList");
+    const totalAmountElement = document.getElementById("totalAmount");
+    const shippingFeeElement = document.getElementById("shippingFee");
+    const downPaymentElement = document.getElementById("downPayment");
+    const remainingBalanceElement = document.getElementById("remainingBalance");
+    const paymentTypeSelect = document.getElementById("paymentType");
+    const downPaymentDiv = document.getElementById("downPaymentDiv");
+    const downPaymentPercentageInput = document.getElementById("downPaymentPercentage");
+    const downPaymentError = document.getElementById("downPaymentError");
+    const SHIPPING_FEE = 25;
+
+    function placeOrder() {
+        const orderType = document.getElementById("orderType").value;
+        window.location.href = `@Url.Action("CreateCustomOrder", "Cart")?willPickup=${orderType}&paymentType=${paymentTypeSelect.value}&downPayment=${downPaymentPercentageInput.value}`;
+    }
+
+    function toggleDownPaymentInput() {
+        const paymentType = paymentTypeSelect.value;
+        if (paymentType === "Partial") {
+            downPaymentDiv.style.display = "block";
+        } else {
+            downPaymentDiv.style.display = "none";
+            downPaymentPercentageInput.value = "20";
+            downPaymentError.style.display = "none";
+            remainingBalanceElement.textContent = totalAmountElement.textContent;
+        }
+        updateDownPayment();
+    }
+
+    function updateDownPayment() {
+        if (paymentTypeSelect.value === "Partial") {
+            const totalAmount = parseFloat(totalAmountElement.textContent);
+            const downPaymentPercentage = parseFloat(downPaymentPercentageInput.value);
+
+            if (downPaymentPercentage < 20) {
+                downPaymentError.style.display = "block";
+                return;
+            }
+
+            downPaymentError.style.display = "none";
+            const downPayment = (totalAmount * downPaymentPercentage) / 100;
+            const remainingBalance = totalAmount - downPayment;
+
+            downPaymentElement.textContent = downPayment.toFixed(2);
+            remainingBalanceElement.textContent = remainingBalance.toFixed(2);
+        } else {
+            downPaymentElement.textContent = totalAmountElement.textContent;
+            remainingBalanceElement.textContent = "0.00";
+        }
+    }
+
+    function updateSummary() {
+        let total = 0;
+        selectedItemsList.innerHTML = "";
+
+        itemCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const row = checkbox.closest("tr");
+
+                const productName = row.querySelector("td:nth-child(2) strong").textContent;
+                const itemTotalPrice = parseFloat(
+                    row.querySelector(".item-total-price").textContent.replace("₱", "")
+                );
+
+                total += itemTotalPrice;
+                const listItem = document.createElement("li");
+                listItem.textContent = productName + " - ₱" + itemTotalPrice.toFixed(2);
+                selectedItemsList.appendChild(listItem);
+            }
+        });
+
+        let shippingFee = 0;
+        const orderType = document.getElementById("orderType").value;
+        if (orderType === "Delivery") {
+            shippingFee = SHIPPING_FEE;
+        }
+
+        const realTotal = total + shippingFee;
+
+        totalAmountElement.textContent = realTotal.toFixed(2);
+        shippingFeeElement.textContent = shippingFee.toFixed(2);
+
+        updateDownPayment();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        itemCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", updateSummary);
+        });
+        updateSummary();
+    });
+    function applyFilters() {
+        const statusFilter = document.getElementById("statusFilter").value;
+        const search = document.getElementById("searchInput").value;
+        window.location.href = `@Url.Action("CartItem", "Cart")?status=${statusFilter}&search=${search}&page=1`;
+    }
+    function selectItem(id) {
+        const url = `@Url.Action("SetCartItemSelected", "Cart")?id=${id}`;
+
+        fetch(url, { method: 'POST' })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Item selected successfully');
+                } else {
+                    console.error('Error selecting item');
+                }
+            });
+    }
+
+</script>

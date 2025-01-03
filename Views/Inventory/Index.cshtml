@@ -1,196 +1,156 @@
-@model IEnumerable<PetalOrSomething.Models.FlowerInventory>
+@model InventoryViewModel
 
-<div class="container mt-3">
-    <h1 class="h4 fw-bold mb-0">Flower Inventory</h1>
-
-    <!-- Product List Table -->
-    <div class="table-responsive">
-        <table class="table table-sm table-hover table-bordered text-center align-middle mb-0">
-            <thead class="table-secondary text-nowrap">
-                <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Price</th>
-                    <th scope="col">Total Stock</th>
-                    <th scope="col">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var inventory in Model)
-                {
-                    <tr>
-                        <td class="text-start">@inventory.Name</td>
-                        <td>@inventory.Price.ToString("C")</td>
-                        <td>@inventory.TotalStock</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="viewStocks(@inventory.Id)">
-                                View Stocks
-                            </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="d-flex justify-content-between mt-3">
-        <a href="@Url.Action("Create", "Inventory")" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-circle"></i> Add New Flower
-        </a>
-    </div>
-</div>
-
-<!-- Modal for Adding Stock -->
-<div class="modal fade" id="addStockModal" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addStockModalLabel">Add Stock to Flower</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addStockForm">
-                    <div class="mb-3">
-                        <label for="quantity" class="form-label">Quantity</label>
-                        <input type="number" class="form-control" id="quantity" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="expiryDate" class="form-label">Expiry Date</label>
-                        <input type="date" class="form-control" id="expiryDate" required>
-                    </div>
-                    <input type="hidden" id="inventoryId">
-                    <div class="d-flex justify-content-between mt-3">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary btn-sm">Add Stock</button>
-                    </div>
-                </form>
+<div class="container" style="margin-top: -5px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h1 class="h5 fw-bold mb-0 border-start border-3 border-danger ps-3">FLOWER INVENTORY</h1>
+            <div class="d-flex align-items-center gap-2">
+                <select id="categoryFilter" class="form-select form-select-sm w-auto" onchange="applyFilters()"
+                    asp-for="CategoryFilter">
+                    <option value="All">All Categories</option>
+                    <option value="Flowers">Flowers</option>
+                    <option value="Bouquets">Bouquets</option>
+                    <option value="Special Arrangements">Special Arrangements</option>
+                    <option value="Roses">Roses</option>
+                    <option value="Tulips">Tulips</option>
+                    <option value="Sunflowers">Sunflowers</option>
+                    <option value="Orchids">Orchids</option>
+                    <option value="Daisies">Daisies</option>
+                    <option value="Carnations">Carnations</option>
+                    <option value="Lilies">Lilies</option>
+                    <option value="Custom Bouquets">Custom Bouquets</option>
+                </select>
+                <a href="@Url.Action("Create", "Inventory")" class="text-white btn btn-light btn-sm"
+                    style="background-color: #5f4b8b !important;">
+                    <i class="bi bi-plus-circle"></i> Add New Flower
+                </a>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Modal for Viewing Stocks -->
-<div class="modal fade" id="viewStocksModal" tabindex="-1" aria-labelledby="viewStocksModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="viewStocksModalLabel">Stocks for Flower</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="card-body">
+            <div class="mb-3 d-flex align-items-center">
+                <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search"
+                    value="@Model.SearchFilter">
+                <button type="button" class="btn btn-sm btn-secondary ms-2" onclick="applyFilters()">Search</button>
             </div>
-            <div class="modal-body">
-                <div id="stocksTableContainer"></div>
-                <div class="d-flex justify-content-between mt-3">
-                    <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-                    <button class="btn btn-primary btn-sm" data-bs-dismiss="modal" onclick="showAddStockForm()">Add
-                        Stock</button>
-                </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered text-center align-middle mb-0">
+                    <thead class="table-secondary text-nowrap" style="color:#221E2C66 !important">
+                        <tr>
+                            <th scope="col">NAME</th>
+                            <th scope="col">CATEGORY</th>
+                            <th scope="col">PRICE</th>
+                            <th scope="col">ALL STOCK</th>
+                            <th scope="col">GOOD STOCK</th>
+                            <th scope="col">2D MODEL</th>
+                            <th scope="col">3D MODEL</th>
+                            <th scope="col">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody">
+                        @foreach (var inventory in Model.Inventories)
+                        {
+                            <tr data-category="@inventory.Category">
+                                <td>@inventory.Name</td>
+                                <td>@inventory.Category</td>
+                                <td>@inventory.Price.ToString("C")</td>
+                                <td>@inventory.TotalStock</td>
+                                <td>@inventory.TotalStockOfNotExpired</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(inventory.Model2DLink))
+                                    {
+                                        <img src="@inventory.Model2DLink" alt="@inventory.Name" class="img-thumbnail"
+                                            style="max-width: 100px; height: auto;" />
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No 2D Model</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(inventory.Model3DLink))
+                                    {
+                                        <model-viewer src="@inventory.Model3DLink" style="width: auto; height: 100px;"
+                                            camera-controls auto-rotate ar alt="3D Model of @inventory.Name"></model-viewer>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No 3D Model</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <a asp-action="Edit" asp-route-id="@inventory.Id"
+                                            class="btn btn-sm btn-outline-primary">
+                                            Edit Product
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            onclick="viewStocks(@inventory.Id)">
+                                            View Stocks
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal" data-id="@inventory.Id"
+                                            data-name="@inventory.Name" data-model3d="@inventory.Model3DLink">
+                                            Change Availability
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
+
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <div class="text-left">
+                <span>Showing @Model.StartIndex to @Model.EndIndex of @Model.TotalCount items</span>
+            </div>
+
+            <nav>
+                <ul class="pagination justify-content-end mb-0">
+                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link"
+                            href="@Url.Action("Index", new { page = Model.CurrentPage - 1, category = Model.CategoryFilter, search = Model.SearchFilter })"
+                            aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link"
+                                href="@Url.Action("Index", new { page = i, category = Model.CategoryFilter, search = Model.SearchFilter })"
+                                style="color: white; border-color: #5f4b8b; background-color: #5f4b8b;">
+                                @i
+                            </a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link"
+                            href="@Url.Action("Index", new { page = Model.CurrentPage + 1, category = Model.CategoryFilter, search = Model.SearchFilter })"
+                            aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
     </div>
 </div>
 
+@await Html.PartialAsync("Modal/_ViewStocksModal");
+@await Html.PartialAsync("Modal/_AddStocksModal");
+@await Html.PartialAsync("Modal/_DeleteProduct");
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 <script>
-    let selectedInventoryId = null;
-
-    function viewStocks(inventoryId) {
-        selectedInventoryId = inventoryId;
-        fetchStocks(inventoryId);
+    function applyFilters() {
+        const category = document.getElementById("categoryFilter").value;
+        const search = document.getElementById("searchInput").value;
+        window.location.href = `@Url.Action("Index", "Inventory")?category=${category}&search=${search}&page=1`;
     }
-
-    function fetchStocks(inventoryId) {
-        $.ajax({
-            url: '@Url.Action("GetStocks", "FlowerInventory")',
-            type: 'GET',
-            data: { inventoryId: inventoryId },
-            success: function (data) {
-                displayStocks(data);
-            },
-            error: function (xhr, status, error) {
-                console.error("Error fetching stocks:", xhr.responseText);
-            }
-        });
-    }
-
-    function displayStocks(stocks) {
-        let tableHtml = `<table class="table table-sm table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Quantity</th>
-                                    <th>Expiry Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-
-        stocks.forEach(stock => {
-            tableHtml += `<tr>
-                            <td>${stock.quantity}</td>
-                            <td>${new Date(stock.expiryDate).toLocaleDateString()}</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-danger" onclick="removeStock(${stock.id})">Remove</button>
-                            </td>
-                        </tr>`;
-        });
-
-        tableHtml += `</tbody></table>`;
-        document.getElementById("stocksTableContainer").innerHTML = tableHtml;
-
-        // Show the modal
-        $('#viewStocksModal').modal('show');
-    }
-
-    function removeStock(stockId, expiryDate) {
-
-
-        if (confirm("Are you sure you want to remove this expired stock?")) {
-            $.ajax({
-                url: '@Url.Action("RemoveStock", "FlowerInventory")',
-                type: 'POST',
-                data: {
-                    stockId: stockId
-                },
-                success: function (response) {
-                    alert(response.message); // Success message from the controller
-                    location.reload(); // Reload to reflect changes
-                },
-                error: function (xhr, status, error) {
-                    alert('Failed to remove stock: ' + xhr.responseText);
-                }
-            });
-        }
-    }
-
-
-    function showAddStockForm() {
-        // Show modal to add stock
-        $('#addStockModal').modal('show');
-        document.getElementById("inventoryId").value = selectedInventoryId;
-    }
-
-    document.getElementById("addStockForm").addEventListener("submit", function (event) {
-        event.preventDefault();
-
-        const quantity = document.getElementById("quantity").value;
-        const expiryDate = document.getElementById("expiryDate").value;
-        const inventoryId = document.getElementById("inventoryId").value;
-
-        $.ajax({
-            url: '@Url.Action("AddStock", "FlowerInventory")',
-            type: 'POST',
-            data: {
-                inventoryId: inventoryId,
-                quantity: quantity,
-                expiryDate: expiryDate
-            },
-            success: function () {
-                alert("Stock added successfully!");
-                $('#addStockModal').modal('hide');
-                fetchStocks(inventoryId);  // Refresh stock data after adding
-            },
-            error: function (xhr, status, error) {
-                console.error("Error response from server:", xhr.responseText);
-                alert("Failed to add stock.");
-            }
-        });
-    });
 </script>

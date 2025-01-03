@@ -1,0 +1,79 @@
+<div class="modal fade" id="assetDetailsModal" tabindex="-1" aria-labelledby="assetDetailsModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="modal-title fw-bold border-start border-3 border-danger ps-3" id="assetDetailsModalLabel">
+                    ASSET DETAILS
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="fw-bold" for="assetIDInput">Asset ID:</label>
+                            <input type="text" id="assetIDInput" class="form-control" readonly />
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold" for="assetNameInput">Asset Name:</label>
+                            <input type="text" id="assetNameInput" class="form-control" readonly />
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold" for="assetPriceInput">Price:</label>
+                            <input type="text" id="assetPriceInput" class="form-control" readonly />
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="mb-4">
+                            <strong>3D MODEL:</strong>
+                            <model-viewer id="modelViewer" style="width: 100%; height: 300px;"
+                                class="border rounded p-2 text-center" background-color="#f9f9f9" camera-controls
+                                auto-rotate ar alt="3D Model Preview">
+                            </model-viewer>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var assetDetailsModal = document.getElementById('assetDetailsModal');
+        assetDetailsModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var assetId = button.getAttribute('data-id');
+            var assetName = button.getAttribute('data-name');
+            var assetPrice = button.getAttribute('data-price');
+            var model3DLink = button.getAttribute('data-model3d');
+
+            var assetIDInput = document.querySelector('#assetIDInput');
+            assetIDInput.value = assetId;
+
+            var assetNameInput = document.querySelector('#assetNameInput');
+            assetNameInput.value = assetName;
+
+            var assetPriceInput = document.querySelector('#assetPriceInput');
+            assetPriceInput.value = `₱${parseFloat(assetPrice).toFixed(2)}`;
+
+            var modelViewer = document.querySelector('#modelViewer');
+            if (model3DLink) {
+                modelViewer.setAttribute('src', model3DLink);
+            } else {
+                modelViewer.removeAttribute('src');
+                console.warn('No 3D model link provided');
+            }
+        });
+    });
+
+</script>

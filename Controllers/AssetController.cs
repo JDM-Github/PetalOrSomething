@@ -1,40 +1,109 @@
+using InquiryManagementApp.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using PetalOrSomething.Data;
 using PetalOrSomething.Models;
-using System.Linq;
 
 namespace PetalOrSomething.Controllers
 {
     public class AssetController : Controller
     {
         private readonly ApplicationDbContext _context;
-
-        public AssetController(ApplicationDbContext context)
+        public readonly FileUploadService _fileUploadService;
+        public AssetController(ApplicationDbContext context, FileUploadService fileUploadService)
         {
             _context = context;
+            _fileUploadService = fileUploadService;
         }
 
         // GET: Asset
-        public IActionResult Index()
+        public async Task<IActionResult> Index(int page = 1, string search = "", string sort = "newest", string priceRange = "all")
         {
-            var assets = _context.Assets.ToList();
-            return View(assets);
+            int itemsPerPage = 10;
+            var query = _context.Assets.AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(a => a.Name.Contains(search));
+            }
+
+            if (priceRange == "50-100")
+            {
+                query = query.Where(a => a.Price >= 50 && a.Price <= 100);
+            }
+            else if (priceRange == "100-200")
+            {
+                query = query.Where(a => a.Price >= 100 && a.Price <= 200);
+            }
+            else if (priceRange == "300+")
+            {
+                query = query.Where(a => a.Price >= 300);
+            }
+
+            switch (sort)
+            {
+                case "newest":
+                    query = query.OrderByDescending(a => a.Id);
+                    break;
+                case "oldest":
+                    query = query.OrderBy(a => a.Id);
+                    break;
+                case "price_low_high":
+                    query = query.OrderBy(a => a.Price);
+                    break;
+                case "price_high_low":
+                    query = query.OrderByDescending(a => a.Price);
+                    break;
+            }
+
+            int totalItems = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)itemsPerPage);
+
+            var assets = await query
+                .Skip((page - 1) * itemsPerPage)
+                .Take(itemsPerPage)
+                .ToListAsync();
+
+            var totalCount = await query.CountAsync();
+            var startIndex = (page - 1) * itemsPerPage + 1;
+            var endIndex = page * itemsPerPage > totalItems ? totalItems : page * itemsPerPage;
+
+            var model = new AssetViewModel
+            {
+                Assets = assets,
+                SearchFilter = search,
+                CurrentPage = page,
+                TotalPages = totalPages,
+                TotalItems = totalItems,
+                ItemsPerPage = itemsPerPage,
+                SortFilter = sort,
+                TotalCount = totalCount,
+                PriceRangeFilter = priceRange,
+                StartIndex = startIndex,
+                EndIndex = endIndex
+            };
+
+            return View(model);
         }
 
-        // GET: Asset/Add
-        // GET: Asset/Add
+
+
         public IActionResult Add()
         {
             return View(new Asset());
         }
 
-        // POST: Asset/Add
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Add(Asset asset)
+        public async Task<IActionResult> AddAsync(Asset asset, IFormFile Model3DFile)
         {
             if (ModelState.IsValid)
             {
+                if (Model3DFile != null)
+                {
+                    var model3D = await _fileUploadService.UploadFileToCloudinaryAsync(Model3DFile);
+                    asset.Model3DLink = model3D;
+                }
                 _context.Assets.Add(asset);
                 _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
@@ -42,7 +111,6 @@ namespace PetalOrSomething.Controllers
             return View(asset);
         }
 
-        // GET: Asset/Edit/5
         public IActionResult Edit(int id)
         {
             var asset = _context.Assets.FirstOrDefault(a => a.Id == id);
@@ -53,61 +121,55 @@ namespace PetalOrSomething.Controllers
             return View(asset);
         }
 
-        // POST: Asset/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, Asset asset)
+        public async Task<IActionResult> Edit(Asset model, IFormFile Model3DFile)
         {
-            if (id != asset.Id)
-            {
-                return NotFound();
-            }
-
             if (ModelState.IsValid)
             {
-                _context.Update(asset);
-                _context.SaveChanges();
-                return RedirectToAction(nameof(Index));
+                var asset = await _context.Assets.FindAsync(model.Id);
+                if (asset == null)
+                {
+                    return NotFound();
+                }
+                asset.Name = model.Name;
+                asset.Category = model.Category;
+                asset.Price = model.Price;
+                if (Model3DFile != null)
+                {
+                    var model3DLink = await _fileUploadService.UploadFileToCloudinaryAsync(Model3DFile);
+                    asset.Model3DLink = model3DLink;
+                }
+                _context.Assets.Update(asset);
+                await _context.SaveChangesAsync();
+
+                return RedirectToAction("Index");
             }
-            return View(asset);
+            return View(model);
         }
 
-        // GET: Asset/Delete/5
-        public IActionResult Delete(int id)
+        [HttpPost]
+        public async Task<IActionResult> Delete(int id)
         {
-            var asset = _context.Assets.FirstOrDefault(a => a.Id == id);
-            if (asset == null)
+            var inventory = await _context.Assets.FindAsync(id);
+            if (inventory == null)
             {
                 return NotFound();
             }
-            return View(asset);
+            inventory.IsAvailable = !inventory.IsAvailable;
+            _context.Update(inventory);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
         }
 
-        // POST: Asset/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
-        {
-            var asset = _context.Assets.FirstOrDefault(a => a.Id == id);
-            if (asset == null)
-            {
-                return NotFound();
-            }
-
-            _context.Assets.Remove(asset);
-            _context.SaveChanges();
-            return RedirectToAction(nameof(Index));
-        }
-
-        // GET: Asset/Details/5
-        public IActionResult Details(int id)
-        {
-            var asset = _context.Assets.FirstOrDefault(a => a.Id == id);
-            if (asset == null)
-            {
-                return NotFound();
-            }
-            return View(asset);
-        }
+        // public IActionResult Details(int id)
+        // {
+        //     var asset = _context.Assets.FirstOrDefault(a => a.Id == id);
+        //     if (asset == null)
+        //     {
+        //         return NotFound();
+        //     }
+        //     return View(asset);
+        // }
     }
 }

@@ -13,10 +13,12 @@ namespace PetalOrSomething.Controllers
     public class AccountsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly EmailService _emailService;
 
-        public AccountsController(ApplicationDbContext context)
+        public AccountsController(ApplicationDbContext context, EmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         // GET: Accounts
@@ -59,19 +61,46 @@ namespace PetalOrSomething.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FirstName,MiddleName,LastName,Email,Password,PhoneNumber,Location")] Account account)
+        public async Task<IActionResult> Create(Account account)
         {
             if (ModelState.IsValid)
             {
+                if (_context.Account.Any(a => a.Email == account.Email))
+                {
+                    TempData["ErrorMessage"] = "Email already exists.";
+                    return View(account);
+                }
                 account.Password = HashPassword(account.Password);
 
                 _context.Add(account);
                 await _context.SaveChangesAsync();
 
-                HttpContext.Session.SetString("Registered", "Registration Success");
-                return RedirectToAction("Login", "Accounts");
+                await _emailService.SendEmailAsync(account.Email, "Sent Verification Code",
+                    $"Your verification code is: {account.VerificationCode}");
+
+                TempData["SuccessMessage"] = "Account successfully created.";
+                TempData["Email"] = account.Email;
+                return RedirectToAction("Verify", "Accounts");
             }
             return View(account);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CheckEmailAvailability([FromBody] EmailRequest emailRequest)
+        {
+            if (string.IsNullOrEmpty(emailRequest?.Email))
+            {
+                return Json("Email is empty.");
+            }
+            var accounts = await _context.Account.ToListAsync();
+            foreach (var account in accounts)
+            {
+                if (account.Email == emailRequest.Email)
+                {
+                    return Json(false);
+                }
+            }
+            return Json(true);
         }
 
         public IActionResult Logout()
@@ -114,8 +143,13 @@ namespace PetalOrSomething.Controllers
                     return View();
                 }
 
+                if (!account.IsVerified)
+                {
+                    TempData["Email"] = account.Email;
+                    return RedirectToAction("Verify", "Accounts");
+                }
+
                 HttpContext.Session.SetString("UserId", account.Id.ToString());
-                // HttpContext.Session.SetString("UserName", $"{account.FirstName} {account.LastName}");
                 HttpContext.Session.SetString("FirstName", account.FirstName ?? "");
                 HttpContext.Session.SetString("MiddleName", account.MiddleName ?? "");
                 HttpContext.Session.SetString("LastName", account.LastName ?? "");
@@ -124,15 +158,75 @@ namespace PetalOrSomething.Controllers
                 HttpContext.Session.SetString("Location", account.Location ?? "");
 
                 ViewData["UserId"] = account.Id.ToString();
+
+                TempData["SuccessMessage"] = "Login successful.";
                 return RedirectToAction("Index", "Home");
             }
-
             return View();
         }
 
+        [HttpGet]
+        public IActionResult Verify()
+        {
+            string? email = TempData["Email"]?.ToString();
+            if (string.IsNullOrEmpty(email))
+            {
+                return RedirectToAction("Login", "Accounts");
+            }
 
+            ViewData["Email"] = email;
+            return View();
+        }
 
-        // GET: Accounts/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Verify(string Email, string VerificationCode)
+        {
+            var account = await _context.Account.FirstOrDefaultAsync(a => a.Email == Email);
+            if (account == null)
+            {
+                return BadRequest("Account not found.");
+            }
+
+            account.IsVerified = true;
+            _context.Update(account);
+            await _context.SaveChangesAsync();
+
+            var notification = new Notification
+            {
+                UserId = account.Id,
+                Title = "Welcome to Our Platform!",
+                Message = "Your account has been successfully verified. Welcome aboard, and thank you for joining us!",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Your account has been verified. Please log in.";
+            return RedirectToAction("Login", "Accounts");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendCode(string Email)
+        {
+            var account = await _context.Account.FirstOrDefaultAsync(a => a.Email == Email);
+            if (account == null)
+            {
+                TempData["ErrorMessage"] = "Email not found.";
+                return RedirectToAction("Verify");
+            }
+
+            string verificationCode = "123456";
+            await _emailService.SendEmailAsync(account.Email, "Resend Verification Code",
+                $"Your verification code is: {verificationCode}");
+
+            TempData["SuccessMessage"] = "Verification code has been resent.";
+            TempData["Email"] = account.Email;
+            return RedirectToAction("Verify");
+        }
+
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)

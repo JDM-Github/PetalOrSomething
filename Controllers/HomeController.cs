@@ -1,10 +1,11 @@
 using InquiryManagementApp.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using PetalOrSomething.Data;
 using PetalOrSomething.Models;
-using PetalOrSomething.ViewModels;
 using System.Diagnostics;
+using System.Text;
 
 namespace PetalOrSomething.Controllers
 {
@@ -14,12 +15,14 @@ namespace PetalOrSomething.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<HomeController> _logger;
         public readonly FileUploadService _fileUploadService;
+        private readonly HttpClient _httpClient;
 
-        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, FileUploadService fileUploadService)
+        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, FileUploadService fileUploadService, HttpClient httpClient)
         {
             _logger = logger;
             _context = context;
             _fileUploadService = fileUploadService;
+            _httpClient = httpClient;
         }
 
         public IActionResult Index()
@@ -36,33 +39,141 @@ namespace PetalOrSomething.Controllers
             return View();
         }
 
-        public IActionResult ProductEdit()
+        public IActionResult EditDesign(string ids, string name, string quantity, string note, string customization)
         {
-            var flowerInventories = _context.FlowerInventories
-            .Select(f => new
-            {
-                f.Price,
-                f.Name,
-                f.Model3DLink
-            })
-            .ToList();
-
-            var flowerModels = flowerInventories.Select(f => new
-            {
-                price = f.Price,
-                name = f.Name,
-                modelPath = f.Model3DLink
-            }).ToList();
-
-            ViewBag.FlowerModels = flowerModels;
+            ViewData["Ids"] = ids;
+            ViewData["Name"] = name;
+            ViewData["Quantity"] = quantity;
+            ViewData["Note"] = note;
+            ViewData["Customization"] = customization;
             return View();
         }
 
-        public IActionResult OrderHere()
+        public IActionResult ProductEdit(string searchQuery = "", string categoryFilter = "all")
         {
+            var assets = _context.Assets.Where(c => c.IsAvailable == true).AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchQuery))
+            {
+                assets = assets.Where(a => a.Name.Contains(searchQuery));
+            }
+
+            if (!string.IsNullOrEmpty(categoryFilter) && categoryFilter != "all")
+            {
+                assets = assets.Where(a => a.Category == categoryFilter);
+            }
+
+            var viewModel = new ProductEditViewModel
+            {
+                SearchQuery = searchQuery,
+                CategoryFilter = categoryFilter,
+                Assets = assets.ToList()
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpGet]
+        public IActionResult GetAssets(string searchQuery, string categoryFilter)
+        {
+            var query = _context.Assets.AsQueryable();
+            if (!string.IsNullOrEmpty(searchQuery))
+            {
+                query = query.Where(a => a.Name.Contains(searchQuery));
+            }
+
+            if (!string.IsNullOrEmpty(categoryFilter) && categoryFilter != "all")
+            {
+                query = query.Where(a => a.Category == categoryFilter);
+            }
+
+            var assets = query.ToList();
+            return Json(assets);
+        }
+
+
+        // public IActionResult OrderHere()
+        // {
+        //     var userId = HttpContext.Session.GetString("UserId");
+        //     ViewData["UserId"] = userId;
+        //     return View();
+        // }
+        public async Task<IActionResult> OrderHere(int page = 1, string category = "All")
+        {
+            int pageSize = 10;
             var userId = HttpContext.Session.GetString("UserId");
             ViewData["UserId"] = userId;
-            return View();
+
+            var query = _context.FlowerInventories.Where(c => c.IsAvailable == true).AsQueryable();
+            if (category != "All")
+            {
+                query = query.Where(f => f.Category == category);
+            }
+
+            int totalItems = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            var products = await query
+                .Include(f => f.Stocks)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            var productsWithStock = products
+                .Where(f => f.Stocks
+                    .Where(s => s.ExpiryDate >= DateTime.Now)
+                    .Sum(s => s.Quantity) > 0)
+                .ToList();
+            Console.WriteLine(productsWithStock);
+            var viewModel = new OrderHereViewModel
+            {
+                Products = productsWithStock,
+                CurrentPage = page,
+                TotalPages = totalPages,
+                SelectedCategory = category
+            };
+
+            return View(viewModel);
+        }
+
+        public async Task<ActionResult> Notification(int page = 1)
+        {
+            int pageSize = 10;
+            var query = _context.Notifications.AsQueryable();
+
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (!int.TryParse(userIdString, out int userId))
+            {
+                return Unauthorized();
+            }
+            var user = await _context.Account.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            query = query.Where(item => item.UserId == user.Id);
+            int totalItems = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            var notifications = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .OrderByDescending(n => n.CreatedAt)
+                .ToListAsync();
+
+            var totalCount = await query.CountAsync();
+            var startIndex = (page - 1) * pageSize + 1;
+            var endIndex = page * pageSize > totalCount ? totalCount : page * pageSize;
+
+            var notification = new NotificationView
+            {
+                Notifications = notifications,
+                CurrentPage = page,
+                TotalPages = totalPages,
+                TotalCount = totalCount,
+                StartIndex = startIndex,
+                EndIndex = endIndex
+            };
+            return View(notification);
         }
 
         public IActionResult View3D()
@@ -129,22 +240,290 @@ namespace PetalOrSomething.Controllers
             return Json(products);
         }
 
-
         [HttpPost]
-        public IActionResult AddItem(int productId, int quantity)
+        public async Task<IActionResult> CreatePayment(int productId, int quantity, string note, decimal price)
         {
             var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var totalAmount = price * quantity;
+
+            var payload = new
+            {
+                data = new
+                {
+                    attributes = new
+                    {
+                        amount = totalAmount * 100,
+                        currency = "PHP",
+                        description = "Payment for product",
+                        remarks = "Order a product"
+                    }
+                }
+            };
+
+            var jsonPayload = JsonConvert.SerializeObject(payload);
+            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes("sk_test_PoK58FtMrQaHHc2EyguAKYwj")));
+                var response = await _httpClient.PostAsync(
+                    "https://api.paymongo.com/v1/links",
+                    content
+                );
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    dynamic responseData = JsonConvert.DeserializeObject(responseBody);
+
+                    string checkoutUrl = responseData.data.attributes.checkout_url;
+                    string referenceNumber = responseData.data.attributes.reference_number;
+
+
+
+                    // Update Cart (You can fetch cart details based on userId and remove the ordered product)
+                    // Assuming you have some method to update your cart here
+
+                    // Optionally, store the order in the database with the reference number and order details
+                    // SaveOrder(userId, referenceNumber, productId, quantity);
+
+                    // Redirect to PayMongo checkout page
+                    return Redirect(checkoutUrl);
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Failed to create payment link. Please try again.");
+                    TempData["ErrorMessage"] = "Failed to create payment link. Please try again.";
+                    return View("ProductView");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Error creating payment: {ex.Message}");
+                TempData["ErrorMessage"] = $"Error creating payment: {ex.Message}";
+                return View("ProductView");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddItem(int productId, int quantity, string note)
+        {
+            var userId = HttpContext.Session.GetString("UserId");
+            var user = await _context.Account.FirstOrDefaultAsync(c => c.Id == int.Parse(userId!));
             if (userId == null)
             {
-                return RedirectToAction("CartFinished", "Cart");
+                TempData["ErrorMessage"] = "User not logged in.";
+                return RedirectToAction("Register", "Account");
+            }
+            if (string.IsNullOrEmpty(user!.Location)
+            || string.IsNullOrEmpty(user.PhoneNumber))
+            {
+                TempData["ErrorMessage"] = "Please update your account details.";
+                return RedirectToAction("ProductView", "Home");
+            }
+
+            if (string.IsNullOrWhiteSpace(note))
+            {
+                note = "No note provided.";
             }
             var cartFinished = new CartFinished(
-                int.Parse(userId), productId, quantity
+                int.Parse(userId), productId, quantity, note
             );
             _context.CartFinishedItems.Add(cartFinished);
             _context.SaveChanges();
+
+            TempData["SuccessMessage"] = "Product added to cart successfully!";
             return RedirectToAction("CartFinished", "Cart");
         }
+
+
+        [HttpPost]
+        public async Task<IActionResult> EditCustomItem(string ids, string customization, string productName, int quantity, string note, double total, IFormFile glbFile)
+        {
+            if (string.IsNullOrEmpty(ids))
+            {
+                TempData["ErrorMessage"] = "Invalid ID provided.";
+                return RedirectToAction("ProductEdit");
+            }
+
+            if (!int.TryParse(ids, out int itemId))
+            {
+                TempData["ErrorMessage"] = "Invalid ID format.";
+                return RedirectToAction("ProductEdit");
+            }
+
+            var userId = HttpContext.Session.GetString("UserId");
+            if (userId == null)
+            {
+                TempData["ErrorMessage"] = "User not logged in.";
+                return RedirectToAction("ProductEdit");
+            }
+
+            if (string.IsNullOrWhiteSpace(productName) || quantity <= 0)
+            {
+                TempData["Customization"] = customization;
+                TempData["ErrorMessage"] = "Invalid input. Please check your entries.";
+                return RedirectToAction("ProductEdit");
+            }
+
+            var cartItem = await _context.CartItems.FindAsync(itemId);
+            if (cartItem == null)
+            {
+                TempData["ErrorMessage"] = "Item not found.";
+                return RedirectToAction("ProductEdit");
+            }
+
+            cartItem.CustomizationJson = customization;
+            cartItem.ProductName = productName;
+            cartItem.Quantity = quantity;
+            cartItem.TotalPrice = total;
+            cartItem.Note = note;
+
+            if (glbFile != null)
+            {
+                var model3DLink = await _fileUploadService.UploadFileToCloudinaryAsync(glbFile);
+                cartItem.Model3DLink = model3DLink;
+            }
+
+            try
+            {
+                _context.CartItems.Update(cartItem);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Item successfully updated in cart.";
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "There was an error updating the item in your cart.";
+                return RedirectToAction("ProductEdit");
+            }
+
+            return RedirectToAction("CartItem", "Cart");
+        }
+
+        public async Task<IActionResult> CreateOrUpdateAccount(string firstName, string middleName, string lastName, string email, string phoneNumber, string location)
+        {
+            if (ModelState.IsValid)
+            {
+                var currentAccount = await _context.Account
+                    .FirstOrDefaultAsync(a => a.Email == email);
+
+                if (currentAccount == null)
+                {
+                    TempData["ErrorMessage"] ="Account not found."; 
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    currentAccount.FirstName = firstName;
+                    currentAccount.MiddleName = middleName;
+                    currentAccount.LastName = lastName;
+                    currentAccount.PhoneNumber = phoneNumber;
+                    currentAccount.Location = location;
+
+                    HttpContext.Session.SetString("FirstName", firstName);
+                    HttpContext.Session.SetString("MiddleName", middleName);
+                    HttpContext.Session.SetString("LastName", lastName);
+                    HttpContext.Session.SetString("PhoneNumber", phoneNumber);
+                    HttpContext.Session.SetString("Location", location);
+
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Account successfully updated.";
+                    return RedirectToAction("Index");
+                }
+            }
+            TempData["ErrorMessage"] = "Invalid input. Please check your entries.";
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddCustomItem(string customization, string productName, int quantity, string note, double total, IFormFile glbFile)
+        {
+            var userId = HttpContext.Session.GetString("UserId");
+            var user = await _context.Account.FirstOrDefaultAsync(c => c.Id == int.Parse(userId!));
+            if (userId == null)
+            {
+                TempData["Customization"] = customization;
+                TempData["ErrorMessage"] = "Invalid input. Please check your entries.";
+                return RedirectToAction("ProductEdit");
+            }
+            if (!string.IsNullOrEmpty(user!.Location)
+            || string.IsNullOrEmpty(user.PhoneNumber))
+            {
+                TempData["Customization"] = customization;
+                TempData["ErrorMessage"] = "Please update your account details.";
+                return RedirectToAction("ProductEdit");
+            }
+            if (string.IsNullOrWhiteSpace(productName) || quantity <= 0)
+            {
+                TempData["Customization"] = customization;
+                TempData["ErrorMessage"] = "Invalid input. Please check your entries.";
+                Console.WriteLine("Invalid input. Please check your entries.");
+                return RedirectToAction("ProductEdit");
+            }
+
+            if (total <= 0)
+            {
+                TempData["Customization"] = customization;
+                TempData["ErrorMessage"] = "Invalid input. Please check your entries.";
+                Console.WriteLine("Invalid input. Please check your entries.");
+                return RedirectToAction("ProductEdit");
+            }
+
+            var model3DLink = await _fileUploadService.UploadFileToCloudinaryAsync(glbFile);
+            var cartItem = new CartItem
+            {
+                Model3DLink = model3DLink,
+                UserId = int.Parse(userId!),
+                CustomizationJson = customization,
+                ProductName = productName,
+                Quantity = quantity,
+                TotalPrice = total,
+                Note = note
+            };
+
+            try
+            {
+                _context.CartItems.Add(cartItem);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Item successfully added to cart.";
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "There was an error adding the item to your cart.";
+                TempData["Customization"] = customization;
+                return RedirectToAction("ProductEdit");
+            }
+
+            return RedirectToAction("CartItem", "Cart");
+        }
+
+        // [HttpPost]
+        // public IActionResult AddCustomItem(int productId, int quantity, string note)
+        // {
+        //     var userId = HttpContext.Session.GetString("UserId");
+        //     if (userId == null)
+        //     {
+        //         return RedirectToAction("CartFinished", "Cart");
+        //     }
+
+        //     if (string.IsNullOrWhiteSpace(note))
+        //     {
+        //         note = "No note provided.";
+        //     }
+        //     var cartFinished = new CartFinished(
+        //         int.Parse(userId), productId, quantity, note
+        //     );
+        //     _context.CartFinishedItems.Add(cartFinished);
+        //     _context.SaveChanges();
+
+        //     TempData["SuccessMessage"] = "Product added to cart successfully!";
+        //     return RedirectToAction("CartFinished", "Cart");
+        // }
 
         [HttpPost]
         public IActionResult PlaceOrder(int productId, int quantity)
@@ -231,28 +610,32 @@ namespace PetalOrSomething.Controllers
                 user => user.Id,
                 (cart, user) => new CartItemWithUserViewModel
                 {
-                    Model3DLink = cart.Model3DLink,
                     Id = cart.Id,
                     UserId = cart.UserId,
                     UserFirstName = user.FirstName,
                     UserLastName = user.LastName,
                     UserEmail = user.Email,
+                    Model3DLink = cart.Model3DLink,
                     Quantity = cart.Quantity,
                     ProductName = cart.ProductName,
-                    ProductPrice = (decimal)cart.Price,
+                    ProductPrice = cart.TotalPrice,
+                    Customization = cart.CustomizationJson,
+                    Note = cart.Note
                 })
             .ToList();
+
+            Console.WriteLine(cartItems);
             return View(cartItems);
         }
 
         [HttpPost]
         public async Task<IActionResult> AddToCart(IFormFile GLBFile, string Name, int Quantity)
         {
-            var userid = HttpContext.Session.GetString("UserId");
-            var model3DLink = await _fileUploadService.UploadFileToCloudinaryAsync(GLBFile);
-            var newCart = new CartItem(model3DLink, int.Parse(userid!), Name, Quantity);
-            _context.CartItems.Add(newCart);
-            await _context.SaveChangesAsync();
+            // var userid = HttpContext.Session.GetString("UserId");
+            // var model3DLink = await _fileUploadService.UploadFileToCloudinaryAsync(GLBFile);
+            // var newCart = new CartItem(model3DLink, int.Parse(userid!), Name, Quantity);
+            // _context.CartItems.Add(newCart);
+            // await _context.SaveChangesAsync();
 
             return RedirectToAction("Index", "Home");
 

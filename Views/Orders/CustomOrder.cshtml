@@ -1,0 +1,349 @@
+@model TransactionCustomOrderView
+
+@{
+    ViewBag.Title = "Order History";
+}
+
+<div class="container" style="margin-top: -5px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h1 class="h5 fw-bold mb-0 border-start border-3 border-danger ps-3">CUSTOM ORDER HISTORY</h1>
+            <div class="d-flex align-items-center gap-2">
+                <select id="statusFilter" class="form-select form-select-sm w-auto" onchange="applyFilters()"
+                    asp-for="StatusFilter">
+                    <option value="All">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Downpayment">Downpayment</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Expired">Expired</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+                <select id="statusOrderFilter" class="form-select form-select-sm w-auto" onchange="applyFilters()"
+                    asp-for="OrderStatusFilter">
+                    <option value="All">All Order Status</option>
+                    <option value="-----">Untracked</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Delivering">Delivering</option>
+                    <option value="Pickup">To Be Pickup</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="mb-3 d-flex align-items-center">
+                <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search"
+                    value="@Model.SearchFilter">
+                <button type="button" class="btn btn-sm btn-secondary ms-2" onclick="applyFilters()">Search</button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered text-center align-middle mb-0">
+                    <thead class="table-secondary text-nowrap" style="color:#221E2C66 !important">
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">REF NO.</th>
+                            <th scope="col">PAID</th>
+                            <th scope="col">BALANCE</th>
+                            <th scope="col">TOTAL</th>
+                            <th scope="col">PAYMENT METHOD</th>
+                            <th scope="col">STATUS</th>
+                            <th scope="col">ORDER STATUS</th>
+                            <th scope="col">CREATED AT</th>
+                            <th scope="col">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model.Orders)
+                        {
+                            <tr>
+                                <td>@order.Id</td>
+                                <td>@order.ReferenceNumber</td>
+                                <td>
+                                    @(order.Status == "Cancelled" || order.Status == "Expired"
+                                        ? "-----"
+                                        : order.RemainingBalance == 0
+                                        ? "Fully Paid"
+                                        : (order.TotalAmount - order.RemainingBalance).ToString("C"))
+                                </td>
+                                <td>
+                                    @(order.Status == "Cancelled" || order.Status == "Expired"
+                                        ? "-----"
+                                        : order.RemainingBalance == 0
+                                        ? "None"
+                                        : order.RemainingBalance.ToString("C"))
+                                </td>
+                                <td>
+                                    @(order.Status == "Cancelled" || order.Status == "Expired"
+                                        ? "-----"
+                                        : order.TotalAmount.ToString("C"))
+                                </td>
+                                <td>@order.PaymentMethod</td>
+                                <td>@order.Status</td>
+                                <td>@order.OrderStatus</td>
+                                <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        @if (order.Status != "Expired" && order.Status != "Cancelled")
+                                        {
+                                            <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal"
+                                                data-bs-target="#productsModal-@order.Id">
+                                                View Products
+                                            </button>
+                                        }
+                                        @if (order.Status == "Pending")
+                                        {
+                                            <a href="@order.PaymentLink" class="btn btn-outline-warning w-100 btn-sm mt-2"
+                                                target="_blank">
+                                                Continue Payment
+                                            </a>
+                                        }
+                                        @if (order.RemainingBalance > 0 && order.Status != "Expired" && order.Status !=
+                                       "Cancelled")
+                                        {
+                                            <button type="button" class="btn btn-outline-primary w-100 btn-sm mt-2"
+                                                data-bs-toggle="modal" data-bs-target="#payBalanceModal-@order.Id">
+                                                Pay Balance
+                                            </button>
+                                        }
+                                        @if (order.Status == "Expired" || order.Status == "Cancelled")
+                                        {
+                                            <form asp-action="DeleteOrder" method="post" class="mt-2">
+                                                <input type="hidden" name="orderId" value="@order.Id" />
+                                                <button type="submit"
+                                                    class="btn btn-outline-danger w-100 btn-sm">Delete</button>
+                                            </form>
+                                        }
+                                        @if (order.OrderStatus == "Completed" && !order.IsFeedback)
+                                        {
+                                            <button type="button" class="btn btn-outline-warning w-100 btn-sm mt-2"
+                                                data-bs-toggle="modal" data-bs-target="#feedbackModal-@order.Id">
+                                                Add Feedback
+                                            </button>
+                                        }
+                                        @if (order.IsFeedback)
+                                        {
+                                            <button type="button" class="btn btn-outline-warning w-100 btn-sm mt-2"
+                                                data-bs-toggle="modal" data-bs-target="#viewFeedbackModal-@order.Id">
+                                                View Feedback
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <div class="modal fade" id="viewFeedbackModal-@order.Id" tabindex="-1"
+                                aria-labelledby="viewFeedbackModal-@order.Id-Label" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                            <h1 class="h5 fw-bold mb-0 border-start border-3 border-danger ps-3">
+                                                VIEW FEEDBACK</h1>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <textarea id="notificationMessage" class="form-control" rows="5" readonly
+                                                    style="resize: none;">@order.FeedBack</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal fade" id="payBalanceModal-@order.Id" tabindex="-1"
+                                aria-labelledby="payBalanceModalLabel-@order.Id" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="payBalanceModalLabel-@order.Id">Pay Remaining
+                                                Balance</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>You have a remaining balance of
+                                                <strong>@order.RemainingBalance.ToString("C")</strong>.
+                                            </p>
+                                            <form asp-action="PayBalance" method="post">
+                                                <input type="hidden" name="orderId" value="@order.Id" />
+                                                <button type="submit" class="btn btn-primary">Proceed to Payment</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal fade" id="feedbackModal-@order.Id" tabindex="-1"
+                                aria-labelledby="feedbackModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                            <h1 class="h5 fw-bold mb-0 border-start border-3 border-danger ps-3"
+                                                id="feedbackModalLabel">PROVIDE FEEDBACK</h1>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form asp-action="SubmitCustomFeedback" method="get">
+                                                <input type="hidden" name="orderId" value="@order.Id" />
+                                                <div class="mb-3">
+                                                    <label for="rating" class="form-label">Rating</label>
+                                                    <select class="form-select" id="rating" name="rating" required>
+                                                        <option value="5">5 - Excellent</option>
+                                                        <option value="4">4 - Good</option>
+                                                        <option value="3">3 - Average</option>
+                                                        <option value="2">2 - Poor</option>
+                                                        <option value="1">1 - Terrible</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="feedback" class="form-label">Feedback</label>
+                                                    <textarea class="form-control" id="feedback" name="feedback" rows="4"
+                                                        placeholder="Write your feedback here..." required></textarea>
+                                                </div>
+                                                <div class="card-footer d-flex justify-content-between align-items-center">
+                                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </tbody>
+                </table>
+
+                @foreach (var order in Model.Orders)
+                {
+                    <div class="modal fade" id="productsModal-@order.Id" tabindex="-1"
+                        aria-labelledby="productsModalLabel-@order.Id" aria-hidden="true">
+                        <div class="modal-dialog" style="min-width: 80vw;">
+                            <div class="modal-content">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <h1 class="h5 fw-bold mb-0 border-start border-3 border-danger ps-3"
+                                        id="productsModalLabel-@order.Id">PRODUCTS FOR ORDER
+                                        #@order.ReferenceNumber.ToUpper()</h1>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body" style="max-height: 500px; overflow-y: auto;">
+                                    <table class="table table-sm table-bordered text-center align-middle mb-0">
+                                        <thead class="table-secondary text-nowrap" style="color:#221E2C66 !important">
+                                            <tr>
+                                                <th scope="col">PRODUCT NAME</th>
+                                                <th scope="col">3D MODEL</th>
+                                                <th scope="col">QUANTITY</th>
+                                                <th scope="col">PRICE</th>
+                                                <th scope="col">TOTAL</th>
+                                                <th scope="col" style="max-width: 200px;">NOTE</th>
+                                                <th scope="col">ACTIONS</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var product in order.Products)
+                                            {
+                                                <tr>
+                                                    <td>@product.ProductName</td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(product.Model3DLink))
+                                                        {
+                                                            <model-viewer src="@product.Model3DLink"
+                                                                style="width: auto; height: 100px;" camera-controls auto-rotate ar
+                                                                alt="3D Model of @product.ProductName"></model-viewer>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">No 3D Model</span>
+                                                        }
+                                                    </td>
+                                                    <td>@product.Quantity</td>
+                                                    <td>@product.TotalPrice.ToString("C")</td>
+                                                    <td>@((product.TotalPrice * product.Quantity).ToString("C"))</td>
+                                                    <td style="max-width: 200px;">
+                                                        <div style="max-height: 100px; overflow-y:
+                                                        auto; word-wrap: break-word;">
+                                                            @product.Note
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="d-flex flex-column">
+                                                            <a href="@Url.Action("View3D", "Admin", new { modelUrl = product.Model3DLink, note = product.Note, customization = product.CustomizationJson })"
+                                                                type="submit" class="btn btn-outline-success">View</a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card-footer d-flex justify-content-between align-items-center">
+                                    <div class="text-left">
+                                        <span>Total: @order.TotalAmount.ToString("C")</span>
+                                    </div>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+            </div>
+        </div>
+
+
+        <div class="card-footer d-flex justify-content-between align-items-center mt-3">
+            <div class="text-left">
+                <span>Showing @Model.StartIndex to @Model.EndIndex of @Model.TotalCount items</span>
+            </div>
+
+            <nav>
+                <ul class="pagination justify-content-end mb-0">
+                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link"
+                            href="@Url.Action("CustomOrder", new { page = Model.CurrentPage - 1, orderStatus = Model.OrderStatusFilter, status = Model.StatusFilter, search = Model.SearchFilter })"
+                            aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link"
+                                href="@Url.Action("CustomOrder", new { page = i, orderStatus = Model.OrderStatusFilter, status = Model.StatusFilter, search = Model.SearchFilter })"
+                                style="@(i == Model.CurrentPage 
+                                    ? "color: white; background-color: #5f4b8b; border-color: #5f4b8b;" 
+                                    : "color: #5f4b8b;")">
+                                @i
+                            </a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link"
+                            href="@Url.Action("CustomOrder", new { page = Model.CurrentPage + 1, orderStatus = Model.OrderStatusFilter, status = Model.StatusFilter, search = Model.SearchFilter })"
+                            aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+
+    </div>
+</div>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+<script>
+    function applyFilters() {
+        const statusFilter = document.getElementById("statusFilter").value;
+        const statusOrderFilter = document.getElementById("statusOrderFilter").value;
+        const search = document.getElementById("searchInput").value;
+        window.location.href = `@Url.Action("CustomOrder")?page=1&status=${statusFilter}&orderStatus=${statusOrderFilter}&search=${search}`;
+    }
+</script>

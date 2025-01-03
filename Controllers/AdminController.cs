@@ -15,10 +15,11 @@ namespace PetalOrSomething.Controllers
             _context = context;
         }
 
-
-        public IActionResult View3D(string modelUrl)
+        public IActionResult View3D(string modelUrl, string note, string customization)
         {
             ViewData["ModelUrl"] = modelUrl;
+            ViewData["Note"] = note;
+            ViewData["Customization"] = customization;
             return View();
         }
 
@@ -28,16 +29,50 @@ namespace PetalOrSomething.Controllers
                 .Include(f => f.Stocks)
                 .ToList();
 
+            var transactionOrders = _context.TransactionOrders
+                .Where(t => t.Status == "Paid")
+                .Include(t => t.Products)
+                .ThenInclude(p => p.Product)
+                .ToList();
+
+            var transactionCustomOrders = _context.TransactionCustomOrders
+                .Where(t => t.Status == "Paid")
+                .Include(t => t.Products)
+                .ToList();
+
             var totalFlowers = flowerInventories.Count;
             var totalStock = flowerInventories.Sum(f => f.Stocks.Sum(s => s.Quantity));
-
             var totalExpiredStock = flowerInventories
                 .SelectMany(f => f.Stocks)
                 .Where(s => s.ExpiryDate <= DateTime.Now)
                 .Sum(s => s.Quantity);
 
-            var expiredPercentage = totalStock > 0 ? (totalExpiredStock * 100) / totalStock : 0;
+            var expiredPercentage = totalStock > 0 ? totalExpiredStock * 100 / totalStock : 0;
             var notExpiredPercentage = 100 - expiredPercentage;
+
+            var mostPopularProducts = transactionOrders
+                .SelectMany(t => t.Products)
+                .GroupBy(p => p.Product)
+                .Select(g => new
+                {
+                    Product = g.Key,
+                    TotalQuantity = g.Sum(p => p.Quantity),
+                    TotalSales = g.Sum(p => p.TotalPrice)
+                })
+                .OrderByDescending(g => g.TotalQuantity)
+                .Take(5)
+                .ToList();
+            
+            Console.WriteLine("--------------------------");
+            Console.WriteLine(mostPopularProducts);
+            mostPopularProducts.ForEach(p => Console.WriteLine(p.Product.Name));
+            Console.WriteLine("--------------------------");
+
+
+            var recentTransactions = transactionOrders
+                .OrderByDescending(t => t.CreatedAt)
+                .Take(10)
+                .ToList();
 
             var model = new AdminDashboardViewModel
             {
@@ -45,11 +80,27 @@ namespace PetalOrSomething.Controllers
                 TotalStock = totalStock,
                 TotalExpiredStock = totalExpiredStock,
                 ExpiredPercentage = expiredPercentage,
-                NotExpiredPercentage = notExpiredPercentage
+                NotExpiredPercentage = notExpiredPercentage,
+                TotalRevenue = transactionOrders.Sum(t => t.TotalAmount) + transactionCustomOrders.Sum(t => t.TotalAmount),
+                MostPopularProducts = mostPopularProducts.Select(p => new PopularProductViewModel
+                {
+                    Name = p.Product.Name,
+                    TotalQuantity = p.TotalQuantity,
+                    TotalSales = p.TotalSales
+                }).ToList(),
+                RecentTransactions = recentTransactions.Select(t => new TransactionViewModel
+                {
+                    TransactionId = t.Id,
+                    Order = t,
+                    Total = t.TotalAmount,
+                    CreatedAt = t.CreatedAt
+                }).ToList()
             };
 
             return View(model);
         }
+
+
 
     }
 }

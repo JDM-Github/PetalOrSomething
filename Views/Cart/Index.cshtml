@@ -31,17 +31,5 @@
                 }
             </tbody>
         </table>
-        <h3>
-            Total: $
-            @* @{
-                var total = Model.Items.Sum(i => i.TotalPrice);
-                @total
-            } *@
-        </h3>
-
-        @* <form action="@Url.Action("CreateOrder", "Order")" method="post">
-            <input type="hidden" name="cartItemIds" value="@string.Join(",", Model.Items.Select(i => i.Id))" />
-            <button type="submit" class="btn btn-primary">Order Now</button>
-        </form> *@
     }
 </div>

@@ -1,0 +1,66 @@
+<div class="modal fade" id="addStockModal" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h1 class="h5 fw-bold mb-0 border-start border-3 border-danger ps-3">ADD STOCK</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addStockForm">
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="expiryDate" class="form-label">Expiry Date</label>
+                        <input type="date" class="form-control" id="expiryDate" required>
+                    </div>
+                    <input type="hidden" id="inventoryId">
+                    <div class="d-flex justify-content-between mt-3">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn text-white btn-sm"
+                            style="background-color: #5f4b8b !important;">Add
+                            Stock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function showAddStockForm() {
+        $('#addStockModal').modal('show');
+        document.getElementById("inventoryId").value = selectedInventoryId;
+    }
+
+    document.getElementById("addStockForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const quantity = document.getElementById("quantity").value;
+        const expiryDate = document.getElementById("expiryDate").value;
+        const inventoryId = document.getElementById("inventoryId").value;
+
+        if (isNaN(quantity) || quantity <= 0) {
+            alert("Quantity must be a positive number.");
+            return;
+        }
+
+        $.ajax({
+            url: '@Url.Action("AddStock", "FlowerInventory")',
+            type: 'POST',
+            data: {
+                inventoryId: inventoryId,
+                quantity: quantity,
+                expiryDate: expiryDate
+            },
+            success: function () {
+                $('#addStockModal').modal('hide');
+                window.location.reload();
+            },
+            error: function (xhr, status, error) {
+                console.error("Error response from server:", xhr.responseText);
+                window.location.reload();
+            }
+        });
+    });
+</script>

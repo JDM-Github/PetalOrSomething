@@ -4,113 +4,184 @@
     ViewData["Title"] = "Register";
 }
 
-<div class="d-flex flex-column flex-md-row vh-70">
-    <!-- Left Side: Image and Description -->
-    <div class="d-none d-md-flex flex-column justify-content-center align-items-center bg-pink text-white p-4"
-        style="width: 50%;
-background-image: url('https://img.freepik.com/premium-photo/vintage-cash-register-amidst-freshly-cut-roses-flower-shop_1282444-98546.jpg'); background-size: cover; background-position: center;">
-        <h1 class="display-4 fw-bold text-white" style="text-shadow: 0 5px 25px #00000088;">Welcome to Petal and Planes
-        </h1>
-        <p class="lead text-center" style="text-shadow: 0 5px 25px #00000088;">Discover exquisite flowers and bouquets
-            crafted for your special moments. Join us to experience nature’s finest blooms.</p>
+<div class="d-flex flex-column flex-md-row justify-content-center align-items-center" style="min-height: 90vh; height: auto;">
+    <div class="rounded-3 d-none d-md-flex flex-column justify-content-center align-items-center text-white p-4"
+        style="width: 50%; min-height: 90vh; height: auto; background-image:
+        url('https://img.freepik.com/premium-photo/vintage-cash-register-amidst-freshly-cut-roses-flower-shop_1282444-98546.jpg');
+        background-size: cover; background-position: center;">
+        <h1 class="display-4 fw-bold text-shadow">Welcome to Petal and Planes</h1>
+        <p class="lead text-center text-shadow">Discover exquisite flowers and bouquets crafted for your special
+            moments. Join us to experience nature’s finest blooms.</p>
     </div>
 
-    <!-- Right Side: Registration Form -->
-    <div class="d-flex justify-content-center align-items-center bg-white p-4" style="width: 50%;">
-        <div class="card" style="max-width: 500px; width: 100%;">
-            <div class="card-body">
-                <h2 class="text-center text-pink mb-4">Register</h2>
-                <form asp-action="Create">
-                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+    <div class="d-flex justify-content-center align-items-center bg-light"
+        style="width: 100%; max-width: 500px; min-height: 90vh; height: auto;">
+        <div class="card border-0 shadow p-4" style="width: 100%;min-height: 90vh; height: auto;">
+            <h1 class="h5 fw-bold mb-0 border-start border-3 border-danger ps-3 mb-3">REGISTER</h1>
+            <form asp-action="Create" id="registrationForm">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-                    <!-- Name Fields -->
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label asp-for="FirstName" class="form-label fw-bold text-muted">First Name</label>
-                            <input asp-for="FirstName" class="form-control" required />
-                            <span asp-validation-for="FirstName" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="MiddleName" class="form-label fw-bold text-muted">Middle Name</label>
-                            <input asp-for="MiddleName" class="form-control" />
-                            <span asp-validation-for="MiddleName" class="text-danger"></span>
-                        </div>
+                    <div class="form-group">
+                        <label asp-for="FirstName" class="form-label fw-bold">First Name</label>
+                        <input asp-for="FirstName" class="form-control" placeholder="Enter your first name" required />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
                     </div>
+                <div class="form-group mt-3">
+                    <label asp-for="LastName" class="form-label fw-bold">Last Name</label>
+                    <input asp-for="LastName" class="form-control" placeholder="Enter your last name" required />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
 
-                    <div class="form-group mt-2">
-                        <label asp-for="LastName" class="form-label fw-bold text-muted">Last Name</label>
-                        <input asp-for="LastName" class="form-control" required />
-                        <span asp-validation-for="LastName" class="text-danger"></span>
-                    </div>
+                <div class="form-group mt-3">
+                    <label asp-for="Email" class="form-label fw-bold">Email</label>
+                    <input asp-for="Email" class="form-control" type="email" placeholder="Enter your email" required />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
 
-                    <div class="form-group mt-2">
-                        <label asp-for="Email" class="form-label fw-bold text-muted">Email</label>
-                        <input asp-for="Email" class="form-control" type="email" required />
-                        <span asp-validation-for="Email" class="text-danger"></span>
+                <div class="form-group mt-3 position-relative">
+                    <label asp-for="Password" class="form-label fw-bold">Password</label>
+                    <div class="input-group">
+                        <input asp-for="Password" class="form-control" id="passwordInput" type="password"
+                            placeholder="Enter your password" required />
+                        <button type="button" class="btn btn-outline-secondary" onclick="togglePassword()">
+                            <i class="fa fa-eye" id="togglePasswordIcon"></i>
+                        </button>
                     </div>
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
 
-                    <!-- Password with Toggle -->
-                    <div class="form-group mt-2 position-relative">
-                        <label asp-for="Password" class="form-label fw-bold text-muted">Password</label>
-                        <div class="d-flex w-100 position-relative">
-                            <input asp-for="Password" class="form-control pe-5" id="passwordInput" type="password"
-                                required />
-                            <button type="button" class="btn btn-light position-absolute end-0 mt-1"
-                                onclick="togglePassword()" style="border: none;">
-                                <i class="fa fa-eye" id="togglePasswordIcon"></i>
-                            </button>
-                        </div>
-                        <span asp-validation-for="Password" class="text-danger"></span>
-                    </div>
+                <div class="form-group mt-3">
+                    <label for="ConfirmPassword" class="form-label fw-bold">Confirm Password</label>
+                    <input type="password" id="ConfirmPassword" class="form-control" placeholder="Confirm your password"
+                        required />
+                </div>
 
-                    <div class="form-group mt-2">
-                        <label for="confirmPassword" class="form-label fw-bold text-muted">Confirm Password</label>
-                        <input type="password" id="confirmPassword" class="form-control" required />
-                        <span class="text-danger" id="passwordMatchError"></span>
-                    </div>
+                <div class="form-group mt-3">
+                    <label asp-for="PhoneNumber" class="form-label fw-bold">Phone Number</label>
+                    <input asp-for="PhoneNumber" class="form-control" type="tel" placeholder="Enter your phone number"
+                        required />
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
 
-                    <div class="form-group mt-2">
-                        <label asp-for="PhoneNumber" class="form-label fw-bold text-muted">Phone Number</label>
-                        <input asp-for="PhoneNumber" class="form-control" type="tel" required />
-                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-                    </div>
+                <div class="form-group mt-3">
+                    <label asp-for="Location" class="form-label fw-bold">Location</label>
+                    <input asp-for="Location" class="form-control" placeholder="Enter your location" required/>
+                    <span asp-validation-for="Location" class="text-danger"></span>
+                </div>
 
-                    <div class="form-group mt-2">
-                        <label asp-for="Location" class="form-label fw-bold text-muted">Location</label>
-                        <input asp-for="Location" class="form-control" />
-                        <span asp-validation-for="Location" class="text-danger"></span>
-                    </div>
-
-                    <div class="form-group mt-3">
-                        <input type="submit" value="Register" class="btn btn-pink w-100 rounded-pill" />
-                    </div>
-                </form>
-            </div>
+                <div class="form-group mt-4">
+                    <button type="button" id="registrationButton"
+                        class="btn w-100 rounded-pill text-white"
+                        style="background-color: #5f4b8b !important;">Register</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        function togglePassword() {
-            const passwordInput = document.getElementById('passwordInput');
-            const toggleIcon = document.getElementById('togglePasswordIcon');
-            const isPassword = passwordInput.type === 'password';
-            passwordInput.type = isPassword ? 'text' : 'password';
-            toggleIcon.classList.toggle('fa-eye');
-            toggleIcon.classList.toggle('fa-eye-slash');
+<style>
+    .text-shadow {
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 15px;
+    }
+
+    .form-label {
+        font-weight: bold;
+    }
+
+    .form-control {
+        border-radius: 10px;
+        box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-outline-secondary {
+        border-radius: 50%;
+    }
+
+    .input-group {
+        flex-wrap: nowrap;
+    }
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.getElementById('registrationButton').addEventListener('click', async function (e) {
+        e.preventDefault();
+
+        let isValid = true;
+        const form = document.getElementById('registrationForm');
+
+        let formData = new FormData(form);
+        for (let [key, value] of formData.entries()) {
+            if (isValid && value.trim() === "" && form.querySelector(`[name=${key}]`).hasAttribute("required")) {
+                isValid = false;
+                errorMessage = 'Please fill out all required fields!';
+                break;
+            }
         }
 
-        const passwordInput = document.getElementById('passwordInput');
-        const confirmPasswordInput = document.getElementById('confirmPassword');
-        const passwordMatchError = document.getElementById('passwordMatchError');
+        let email = form.querySelector('[name="Email"]').value;
+        const isEmailTaken = await checkEmailAvailability(email);
+        if (isEmailTaken) {
+            isValid = false;
+            errorMessage = 'Email is already taken, please choose another.';
+        }
 
-        confirmPasswordInput.addEventListener('input', () => {
-            if (passwordInput.value !== confirmPasswordInput.value) {
-                passwordMatchError.textContent = "Passwords do not match.";
-            } else {
-                passwordMatchError.textContent = "";
-            }
-        });
-    </script>
-}
+        let password = form.querySelector('[name="Password"]').value;
+        if (isValid && password && !/^(?=.*\d)(?=.*[a-zA-Z]).{8,}$/.test(password)) {
+            isValid = false;
+            errorMessage = 'Password must be at least 8 characters long and contain at least one number.';
+        }
+
+        let confirmPassword = document.getElementById('ConfirmPassword').value;
+        if (isValid && confirmPassword !== password) {
+            isValid = false;
+            errorMessage = 'Passwords do not match.';
+        }
+
+        if (isValid) {
+            form.submit();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: errorMessage,
+                showConfirmButton: true
+            });
+        }
+    });
+
+    async function checkEmailAvailability(email) {
+        try {
+            const response = await fetch('/Accounts/CheckEmailAvailability', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: email })
+            });
+            const result = await response.json();
+            return !result; 
+        } catch (error) {
+            console.error("Error checking email:", error);
+            return false;
+        }
+    }
+
+    function togglePassword() {
+        const passwordInput = document.getElementById('passwordInput');
+        const toggleIcon = document.getElementById('togglePasswordIcon');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
+</script>

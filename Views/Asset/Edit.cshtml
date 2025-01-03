@@ -1,22 +1,90 @@
 @model PetalOrSomething.Models.Asset
-
 @{
     ViewData["Title"] = "Edit Asset";
 }
 
-<h1>Edit Asset</h1>
+<div class="container" style="margin-top: -5px;">
+    <div class="card shadow-sm">
+        <div class="card-header text-left bg-light">
+            <h5 class="fw-bold mb-0 border-start border-3 border-danger ps-3">EDIT ASSET</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
 
-<form asp-action="Edit" method="post">
-    <div class="form-group">
-        <label for="Model3DLink">3D Model Link</label>
-        <input type="text" class="form-control" id="Model3DLink" name="Model3DLink" value="@Model.Model3DLink"
-            required />
-    </div>
-    <div class="form-group">
-        <label for="Price">Price</label>
-        <input type="number" class="form-control" id="Price" name="Price" value="@Model.Price" required step="0.01" />
-    </div>
-    <button type="submit" class="btn btn-primary">Save Changes</button>
-</form>
+                <div class="col-md-8">
+                    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                        <input type="hidden" asp-for="Id" />
 
-<a href="@Url.Action("Index")">Back to Asset List</a>
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Asset Name</label>
+                            <input asp-for="Name" class="form-control" placeholder="Enter asset name" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Category" class="form-label">Category</label>
+                            <select asp-for="Category" id="Category" name="Category" class="form-select" required>
+                                <option value="Flowers">Flowers</option>
+                                <option value="Bouquet">Bouquet</option>
+                                <option value="Ribbons">Ribbons</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="Model3DFile">3D Model File</label>
+                            <input type="file" class="form-control" id="Model3DFile" name="Model3DFile"
+                                accept=".glb, .gltf, .obj, .fbx, .stl" />
+                            <div class="form-text">GLB, GLTF, OBJ, FBX, STL. Upload a new file to replace the existing
+                                one.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Price" class="form-label">Price</label>
+                            <input asp-for="Price" type="number" step="0.01" class="form-control"
+                                placeholder="Enter price" min="1" required />
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-outline-danger">Back to List</a>
+                            <button type="submit" class="btn"
+                                style="background-color: #5f4b8b !important; min-width: 200px !important; color: white !important; font-weight: bold !important;">Save</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header text-left bg-light">
+                            <h6 class="fw-bold mb-0 border-start border-3 border-danger ps-3">PREVIEW</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <strong>3D MODEL:</strong>
+                                <model-viewer id="Model3DViewer" style="width: 100%; height: 200px;"
+                                    class="border rounded p-2 text-center" background-color="#f9f9f9" camera-controls
+                                    auto-rotate ar alt="3D Model Preview" src="@Model.Model3DLink">
+                                </model-viewer>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <script>
+        document.getElementById('Model3DFile').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            const viewer = document.getElementById('Model3DViewer');
+            if (file) {
+                const objectURL = URL.createObjectURL(file);
+                viewer.setAttribute('src', objectURL);
+            }
+        });
+    </script>
+}

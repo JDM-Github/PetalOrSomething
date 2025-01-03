@@ -38,9 +38,12 @@ var account = new Account(
     cloudinaryConfig["ApiSecret"]
 );
 var cloudinary = new Cloudinary(account);
+builder.Services.AddHttpClient();
 builder.Services.AddSingleton(cloudinary);
 
 builder.Services.AddTransient<FileUploadService>();
+builder.Services.AddTransient<EmailService>();
+builder.Services.AddHostedService<TransactionExpirationService>();
 
 var app = builder.Build();
 

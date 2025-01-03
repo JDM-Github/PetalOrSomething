@@ -10,7 +10,10 @@ namespace PetalOrSomething.Data
 
         public required DbSet<CartItem> CartItems { get; set; }
         public required DbSet<CartFinished> CartFinishedItems { get; set; }
+        public required DbSet<TransactionOrder> TransactionOrders { get; set; }
+        public required DbSet<TransactionCustomOrder> TransactionCustomOrders { get; set; }
         public required DbSet<Order> Orders { get; set; }
+        public required DbSet<Feedback> Feedbacks { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -26,5 +29,6 @@ namespace PetalOrSomething.Data
         public required DbSet<FlowerInventory> FlowerInventories { get; set; }
         public required DbSet<FlowerStock> FlowerStocks { get; set; }
         public required DbSet<Asset> Assets { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
     }
 }

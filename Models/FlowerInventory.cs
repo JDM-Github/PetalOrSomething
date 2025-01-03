@@ -6,6 +6,14 @@ using System.Linq;
 
 namespace PetalOrSomething.Models
 {
+    public class OrderHereViewModel
+    {
+        public IEnumerable<FlowerInventory> Products { get; set; }
+        public int CurrentPage { get; set; }
+        public int TotalPages { get; set; }
+        public string SelectedCategory { get; set; }
+    }
+
     public class FlowerStock
     {
         [Key]
@@ -22,12 +30,14 @@ namespace PetalOrSomething.Models
     {
         [Key]
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Model3DLink { get; set; } = "";
+        public required string Name { get; set; }
         public string Model2DLink { get; set; } = "";
+        public string Model3DLink { get; set; } = "";
         public string Description { get; set; } = "";
         public decimal Rating { get; set; } = 4.5M;
-        public decimal Price { get; set; }
+        public double Price { get; set; }
+        public string Category { get; set; } = "Default";
+        public bool IsAvailable { get; set; } = true;
         public List<FlowerStock> Stocks { get; set; } = new List<FlowerStock>();
 
         [NotMapped]

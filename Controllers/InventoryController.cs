@@ -18,12 +18,45 @@ namespace PetalOrSomething.Controllers
         }
 
         // GET: Inventory
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, string category = "All", string search = "")
         {
-            var inventories = await _context.FlowerInventories
+            int pageSize = 10;
+            var query = _context.FlowerInventories.AsQueryable();
+            if (category != "All")
+            {
+                query = query.Where(f => f.Category == category);
+            }
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(f => f.Name.Contains(search) || f.Category.Contains(search));
+            }
+
+            int totalItems = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+            var inventories = await query
                 .Include(f => f.Stocks)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
-            return View(inventories);
+
+            var totalCount = await query.CountAsync();
+            var startIndex = (page - 1) * pageSize + 1;
+            var endIndex = page * pageSize > totalCount ? totalCount : page * pageSize;
+
+            var model = new InventoryViewModel
+            {
+                Inventories = inventories,
+                CurrentPage = page,
+                TotalPages = totalPages,
+                CategoryFilter = category,
+                SearchFilter = search,
+                TotalCount = totalCount,
+                StartIndex = startIndex,
+                EndIndex = endIndex,
+            };
+
+            return View(model);
         }
 
         [HttpGet]
@@ -38,11 +71,17 @@ namespace PetalOrSomething.Controllers
         {
             if (ModelState.IsValid)
             {
-                var model3D = await _fileUploadService.UploadFileToCloudinaryAsync(Model3DFile);
-                model.Model3DLink = model3D;
+                if (Model3DFile != null)
+                {
+                    var model3D = await _fileUploadService.UploadFileToCloudinaryAsync(Model3DFile);
+                    model.Model3DLink = model3D;
+                }
 
-                var model2D = await _fileUploadService.UploadFileToCloudinaryAsync(Model2DImage);
-                model.Model2DLink = model2D;
+                if (Model2DImage != null)
+                {
+                    var model2D = await _fileUploadService.UploadFileToCloudinaryAsync(Model2DImage);
+                    model.Model2DLink = model2D;
+                }
 
                 _context.FlowerInventories.Add(model);
                 _context.SaveChanges();
@@ -50,6 +89,7 @@ namespace PetalOrSomething.Controllers
             }
             return View(model);
         }
+
 
         public async Task<IActionResult> Details(int? id)
         {
@@ -68,14 +108,10 @@ namespace PetalOrSomething.Controllers
             return View(inventory);
         }
 
-        public async Task<IActionResult> Edit(int? id)
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var inventory = await _context.Inventories.FindAsync(id);
+            var inventory = await _context.FlowerInventories.FindAsync(id);
             if (inventory == null)
             {
                 return NotFound();
@@ -85,66 +121,68 @@ namespace PetalOrSomething.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ProductName,Description,Price,StockQuantity,Category")] Inventory inventory)
+        public async Task<IActionResult> Edit(int id, FlowerInventory model, IFormFile? Model3DFile = null, IFormFile? Model2DImage = null)
         {
-            if (id != inventory.Id)
+            if (id != model.Id)
             {
-                return NotFound();
+                return BadRequest();
             }
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(inventory);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!InventoryExists(inventory.Id))
+                    var existingInventory = await _context.FlowerInventories.FindAsync(id);
+                    if (existingInventory == null)
                     {
                         return NotFound();
                     }
-                    else
+                    existingInventory.Name = model.Name;
+                    existingInventory.Category = model.Category;
+                    existingInventory.Price = model.Price;
+
+                    if (Model3DFile != null)
                     {
-                        throw;
+                        var model3D = await _fileUploadService.UploadFileToCloudinaryAsync(Model3DFile);
+                        existingInventory.Model3DLink = model3D;
                     }
+
+                    if (Model2DImage != null)
+                    {
+                        var model2D = await _fileUploadService.UploadFileToCloudinaryAsync(Model2DImage);
+                        existingInventory.Model2DLink = model2D;
+                    }
+
+                    _context.Update(existingInventory);
+                    await _context.SaveChangesAsync();
+
+                    return RedirectToAction("Index");
                 }
-                return RedirectToAction(nameof(Index));
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.FlowerInventories.Any(e => e.Id == id))
+                    {
+                        return NotFound();
+                    }
+                    throw;
+                }
             }
-            return View(inventory);
+            return View(model);
         }
 
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
 
-            var inventory = await _context.Inventories
-                .FirstOrDefaultAsync(m => m.Id == id);
+        [HttpPost]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var inventory = await _context.FlowerInventories.FindAsync(id);
             if (inventory == null)
             {
                 return NotFound();
             }
-
-            return View(inventory);
-        }
-
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var inventory = await _context.Inventories.FindAsync(id);
-            _context.Inventories.Remove(inventory);
+            inventory.IsAvailable = !inventory.IsAvailable;
+            _context.Update(inventory);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool InventoryExists(int id)
-        {
-            return _context.Inventories.Any(e => e.Id == id);
+            return RedirectToAction("Index");
         }
 
 
