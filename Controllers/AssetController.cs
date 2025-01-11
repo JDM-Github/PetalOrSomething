@@ -17,7 +17,7 @@ namespace PetalOrSomething.Controllers
         }
 
         // GET: Asset
-        public async Task<IActionResult> Index(int page = 1, string search = "", string sort = "newest", string priceRange = "all")
+        public async Task<IActionResult> Index(int page = 1, string search = "", string sort = "newest", string priceRange = "all", string isActive = "")
         {
             int itemsPerPage = 10;
             var query = _context.Assets.AsQueryable();
@@ -38,6 +38,16 @@ namespace PetalOrSomething.Controllers
             else if (priceRange == "300+")
             {
                 query = query.Where(a => a.Price >= 300);
+            }
+
+            switch (isActive)
+            {
+                case "active":
+                    query = query.Where(a => a.IsAvailable);
+                    break;
+                case "inactive":
+                    query = query.Where(a => !a.IsAvailable);
+                    break;
             }
 
             switch (sort)
@@ -80,7 +90,8 @@ namespace PetalOrSomething.Controllers
                 TotalCount = totalCount,
                 PriceRangeFilter = priceRange,
                 StartIndex = startIndex,
-                EndIndex = endIndex
+                EndIndex = endIndex,
+                FilterAvailable = isActive
             };
 
             return View(model);
@@ -123,7 +134,7 @@ namespace PetalOrSomething.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Asset model, IFormFile Model3DFile)
+        public async Task<IActionResult> Edit(Asset model, IFormFile? Model3DFile)
         {
             if (ModelState.IsValid)
             {
@@ -154,11 +165,14 @@ namespace PetalOrSomething.Controllers
             var inventory = await _context.Assets.FindAsync(id);
             if (inventory == null)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "Inventory not found.";
+                return RedirectToAction("Index");
             }
             inventory.IsAvailable = !inventory.IsAvailable;
             _context.Update(inventory);
             await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Asset availability changed successfully! {inventory.Name} is now {(inventory.IsAvailable ? "Available" : "Unavailable")}";
             return RedirectToAction("Index");
         }
 

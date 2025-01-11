@@ -18,7 +18,7 @@ namespace PetalOrSomething.Controllers
         }
 
         // GET: Inventory
-        public async Task<IActionResult> Index(int page = 1, string category = "All", string search = "")
+        public async Task<IActionResult> Index(int page = 1, string category = "All", string search = "", string isActive = "")
         {
             int pageSize = 10;
             var query = _context.FlowerInventories.AsQueryable();
@@ -30,6 +30,16 @@ namespace PetalOrSomething.Controllers
             if (!string.IsNullOrEmpty(search))
             {
                 query = query.Where(f => f.Name.Contains(search) || f.Category.Contains(search));
+            }
+
+            switch (isActive)
+            {
+                case "active":
+                    query = query.Where(a => a.IsAvailable);
+                    break;
+                case "inactive":
+                    query = query.Where(a => !a.IsAvailable);
+                    break;
             }
 
             int totalItems = await query.CountAsync();
@@ -54,7 +64,21 @@ namespace PetalOrSomething.Controllers
                 TotalCount = totalCount,
                 StartIndex = startIndex,
                 EndIndex = endIndex,
+                FilterAvailable = isActive
             };
+            var almostWitheredInventories = await _context.FlowerInventories
+                .Include(e => e.Stocks)
+                .Select(e => new
+                {
+                    e.Id,
+                    e.Name,
+                    TotalStock = e.Stocks.Sum(s => s.Quantity)
+                })
+                .Where(x => x.TotalStock < 100)
+                .ToListAsync();
+
+            ViewBag.AlmostWithered = almostWitheredInventories;
+
 
             return View(model);
         }
@@ -67,10 +91,15 @@ namespace PetalOrSomething.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(FlowerInventory model, IFormFile Model3DFile, IFormFile Model2DImage)
+        public async Task<IActionResult> Create(FlowerInventory model, IFormFile? Model3DFile, IFormFile? Model2DImage)
         {
             if (ModelState.IsValid)
             {
+                if (await _context.FlowerInventories.AnyAsync(f => f.Name == model.Name))
+                {
+                    TempData["ErrorMessage"] = "Flower already exists.";
+                    return View(model);
+                }
                 if (Model3DFile != null)
                 {
                     var model3D = await _fileUploadService.UploadFileToCloudinaryAsync(Model3DFile);
@@ -85,8 +114,10 @@ namespace PetalOrSomething.Controllers
 
                 _context.FlowerInventories.Add(model);
                 _context.SaveChanges();
+                TempData["SuccessMessage"] = "Product added successfully!";
                 return RedirectToAction("Index");
             }
+            TempData["ErrorMessage"] = "Invalid input. Please check your entries.";
             return View(model);
         }
 
@@ -125,7 +156,8 @@ namespace PetalOrSomething.Controllers
         {
             if (id != model.Id)
             {
-                return BadRequest();
+                TempData["ErrorMessage"] = "Invalid request.";
+                return RedirectToAction("Index");
             }
 
             if (ModelState.IsValid)
@@ -135,7 +167,8 @@ namespace PetalOrSomething.Controllers
                     var existingInventory = await _context.FlowerInventories.FindAsync(id);
                     if (existingInventory == null)
                     {
-                        return NotFound();
+                        TempData["ErrorMessage"] = "Inventory not found.";
+                        return RedirectToAction("Index");
                     }
                     existingInventory.Name = model.Name;
                     existingInventory.Category = model.Category;
@@ -156,18 +189,21 @@ namespace PetalOrSomething.Controllers
                     _context.Update(existingInventory);
                     await _context.SaveChangesAsync();
 
+                    TempData["SuccessMessage"] = "Inventory updated successfully!";
                     return RedirectToAction("Index");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!_context.FlowerInventories.Any(e => e.Id == id))
                     {
-                        return NotFound();
+                        TempData["ErrorMessage"] = "Inventory not found.";
+                        return RedirectToAction("Index");
                     }
                     throw;
                 }
             }
-            return View(model);
+            TempData["ErrorMessage"] = "Invalid input. Please check your entries.";
+            return RedirectToAction("Index");
         }
 
 
@@ -177,11 +213,14 @@ namespace PetalOrSomething.Controllers
             var inventory = await _context.FlowerInventories.FindAsync(id);
             if (inventory == null)
             {
-                return NotFound();
+                TempData["ErrorMessage"] = "Inventory not found.";
+                return RedirectToAction("Index");
             }
             inventory.IsAvailable = !inventory.IsAvailable;
             _context.Update(inventory);
             await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Asset availability changed successfully! {inventory.Name} is now {(inventory.IsAvailable ? "Available" : "Unavailable")}";
             return RedirectToAction("Index");
         }
 

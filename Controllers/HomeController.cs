@@ -7,6 +7,54 @@ using PetalOrSomething.Models;
 using System.Diagnostics;
 using System.Text;
 
+
+// var orderRequest = new OrdersCreateRequest();
+// orderRequest.Prefer("return=representation");
+// orderRequest.RequestBody(new OrderRequest
+// {
+//     CheckoutPaymentIntent = "CAPTURE",
+//     ApplicationContext = new ApplicationContext
+//     {
+//         ReturnUrl = Url.Action("PaymentBalanceSuccess", "Payment", new { userId, paymentId = payment.Id, amount = firstPayment }, Request.Scheme),
+//         CancelUrl = Url.Action("PaymentBalanceFailed", "Payment", new { userId, paymentId = payment.Id, amount = firstPayment }, Request.Scheme)
+//     },
+//     PurchaseUnits = new List<PurchaseUnitRequest>
+//             {
+//                 new PurchaseUnitRequest
+//                 {
+//                     AmountWithBreakdown = new AmountWithBreakdown
+//                     {
+//                         CurrencyCode = "PHP",
+//                         Value = firstPayment.ToString("F2")
+//                     },
+//                     Description = "Balance Fee"
+//                 }
+//             }
+// });
+
+// try
+// {
+//     var client = new PayPalHttpClient(PayPalConfig.GetEnvironment());
+//     var response = await client.Execute(orderRequest);
+//     var result = response.Result<Order>();
+
+//     var approvalUrl = result.Links.FirstOrDefault(link => link.Rel == "approve")?.Href;
+//     if (approvalUrl != null)
+//     {
+//         return Redirect(approvalUrl);
+//     }
+//     else
+//     {
+//         TempData["ErrorMessage"] = "Payment approval URL not found.";
+//         return RedirectToAction("PaymentHistory");
+//     }
+// }
+// catch (Exception ex)
+// {
+//     TempData["ErrorMessage"] = $"Error during payment: {ex.Message}";
+//     return RedirectToAction("PaymentHistory");
+// }
+
 namespace PetalOrSomething.Controllers
 {
     public class HomeController : Controller
@@ -409,6 +457,16 @@ namespace PetalOrSomething.Controllers
         {
             if (ModelState.IsValid)
             {
+                if (phoneNumber == "")
+                {
+                    TempData["ErrorMessage"] = "Phone number is required.";
+                    return RedirectToAction("Index");
+                }
+                if (location == "")
+                {
+                    TempData["ErrorMessage"] = "Location is required.";
+                    return RedirectToAction("Index");
+                }
                 var currentAccount = await _context.Account
                     .FirstOrDefaultAsync(a => a.Email == email);
 
@@ -451,7 +509,7 @@ namespace PetalOrSomething.Controllers
                 TempData["ErrorMessage"] = "Invalid input. Please check your entries.";
                 return RedirectToAction("ProductEdit");
             }
-            if (!string.IsNullOrEmpty(user!.Location)
+            if (string.IsNullOrEmpty(user!.Location)
             || string.IsNullOrEmpty(user.PhoneNumber))
             {
                 TempData["Customization"] = customization;

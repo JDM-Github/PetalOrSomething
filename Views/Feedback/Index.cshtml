@@ -34,8 +34,8 @@
                             <th scope="col">RATE</th>
                             <th scope="col">FEEDBACK</th>
                             @if (Context.Session.GetString("UserName") == "ADMINISTRATOR")
-                                {
-                            <th scope="col">ACTIONS</th>
+                            {
+                                <th scope="col">ACTIONS</th>
                             }
                         </tr>
                     </thead>
@@ -59,25 +59,25 @@
                                 </td>
                                 @if (Context.Session.GetString("UserName") == "ADMINISTRATOR")
                                 {
-                                <td>
-                                    <div class="d-flex flex-column">
-                                        @if (feedback.Feedback.IsCustomTransaction)
-                                        {
-                                            <a href="@Url.Action("AdminCustomOrder", "Orders", new { page = 1, search = feedback.CustomTransaction.ReferenceNumber })"
-                                                class="btn btn-sm btn-outline-success">
-                                                View Order
-                                            </a>
-                                        }
-                                        else
-                                        {
-                                            
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            @if (feedback.Feedback.IsCustomTransaction)
+                                            {
+                                                <a href="@Url.Action("AdminCustomOrder", "Orders", new { page = 1, search = feedback.CustomTransaction.ReferenceNumber })"
+                                                    class="btn btn-sm btn-outline-success">
+                                                    View Order
+                                                </a>
+                                            }
+                                            else
+                                            {
+
                                                 <a href="@Url.Action("Index", "Orders", new { page = 1, search = feedback.Transaction.ReferenceNumber})"
                                                     class="btn btn-sm btn-outline-success">
                                                     View Order
                                                 </a>
-                                        }
-                                    </div>
-                                </td>
+                                            }
+                                        </div>
+                                    </td>
                                 }
                             </tr>
                         }

@@ -10,6 +10,7 @@ namespace PetalOrSomething.Models
         [Key]
         public int Id { get; set; }
         public int UserId { get; set; }
+        public string OrderId { get; set; }
 
         public List<CartItem> Products { get; set; }
 
@@ -106,7 +107,7 @@ namespace PetalOrSomething.Models
         [Key]
         public int Id { get; set; }
         public int UserId { get; set; }
-
+        public string OrderId { get; set; }
         public List<CartFinished> Products { get; set; }
 
         public string ReferenceNumber { get; set; }

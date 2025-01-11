@@ -734,6 +734,10 @@ namespace PetalOrSomething.Migrations
                     b.Property<bool>("IsFeedback")
                         .HasColumnType("bit");
 
+                    b.Property<string>("OrderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("OrderStatus")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

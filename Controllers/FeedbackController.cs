@@ -82,16 +82,20 @@ namespace PetalOrSomething.Controllers
                     query = query.Where(f => f.IsCustomTransaction == true);
                 }
             }
+            Console.WriteLine("-----------------------");
+            Console.WriteLine(search);
+            Console.WriteLine("-----------------------");
 
             if (!string.IsNullOrEmpty(search))
             {
+                
                 query = query.Where(f => f.FeedbackNote.Contains(search));
             }
 
             int totalItems = await query.CountAsync();
             int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
             var feedbacks = await (
-                from feedback in _context.Feedbacks
+                from feedback in query
                 join transaction in _context.TransactionOrders
                     on feedback.TransactionId equals transaction.Id into transactions
                 from transaction in transactions.DefaultIfEmpty()

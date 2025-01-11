@@ -10,5 +10,6 @@ namespace PetalOrSomething.Models
         public int TotalCount { get; set; }
         public int StartIndex { get; set; }
         public int EndIndex { get; set; }
+        public string FilterAvailable { get; set; }
     }
 }

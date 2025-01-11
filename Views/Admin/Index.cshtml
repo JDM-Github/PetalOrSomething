@@ -117,7 +117,7 @@
         </div>
 
         <div class="card-footer bg-light text-muted text-center">
-            <small>&copy; 2024 PetalOrSomething | Admin Dashboard</small>
+            <small>&copy; 2024 Petal and Planes | Admin Dashboard</small>
         </div>
     </div>
 </div>
@@ -125,33 +125,6 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        @* var ctxRecentTransactions = document.getElementById('recentTransactionsChart').getContext('2d');
-        var recentTransactionsChart = new Chart(ctxRecentTransactions, {
-            type: 'line',
-            data: {
-                labels: [@string.Join(",", Model.RecentTransactions.Select(t => $"'{t.CreatedAt.ToString("MMM dd")}'"))],
-                datasets: [{
-                    label: 'Transaction Totals',
-                    data: [@string.Join(",", Model.RecentTransactions.Select(t => t.Total))],
-                    backgroundColor: 'rgba(88, 214, 141, 0.2)',
-                    borderColor: '#58d68d',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    x: {
-                        beginAtZero: false
-                    },
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        }); *@
 
         var ctxPopularProducts = document.getElementById('popularProductsChart').getContext('2d');
         var popularProductsChart = new Chart(ctxPopularProducts, {

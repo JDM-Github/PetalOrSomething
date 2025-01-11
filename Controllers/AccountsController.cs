@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -65,11 +66,33 @@ namespace PetalOrSomething.Controllers
         {
             if (ModelState.IsValid)
             {
+                if (!Regex.IsMatch(account.FirstName, @"^[a-zA-Z]+$"))
+                {
+                    TempData["ErrorMessage"] = "First Name must contain only letters.";
+                    return RedirectToAction("Register", "Accounts", account);
+                }
+                if (!Regex.IsMatch(account.LastName, @"^[a-zA-Z]+$"))
+                {
+                    TempData["ErrorMessage"] = "First Name must contain only letters.";
+                    return RedirectToAction("Register", "Accounts", account);
+                }
+                if (!Regex.IsMatch(account.PhoneNumber, @"^[0-9]{11}$"))
+                {
+                    TempData["ErrorMessage"] = "Invalid Phone number. It must be 11 digits, contain only numbers.";
+                    return RedirectToAction("Register", "Accounts", account);
+                }
+
                 if (_context.Account.Any(a => a.Email == account.Email))
                 {
                     TempData["ErrorMessage"] = "Email already exists.";
-                    return View(account);
+                    return RedirectToAction("Register", "Accounts", account);
                 }
+                if (_context.Account.Any(a => a.PhoneNumber == account.PhoneNumber))
+                {
+                    TempData["ErrorMessage"] = "Phone number already exists.";
+                    return RedirectToAction("Register", "Accounts", account);
+                }
+
                 account.Password = HashPassword(account.Password);
 
                 _context.Add(account);
@@ -82,7 +105,8 @@ namespace PetalOrSomething.Controllers
                 TempData["Email"] = account.Email;
                 return RedirectToAction("Verify", "Accounts");
             }
-            return View(account);
+            TempData["ErrorMessage"] = "Invalid input. Please check your entries.";
+            return RedirectToAction("Register", "Accounts", account);
         }
 
         [HttpPost]

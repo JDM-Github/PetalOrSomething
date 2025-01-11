@@ -188,9 +188,17 @@
             <div class="col-lg-3 col-md-6">
                 <div class="card shadow-sm border-0 product-card">
                     <div class="image-container">
+                        @if (!string.IsNullOrEmpty(product.Model3DLink))
+                        {
                         <model-viewer style="width: 100%; height: 100%; object-fit: contain;" src="@product.Model3DLink"
                             alt="3D Product" class="card-img-top" auto-rotate camera-controls
                             background-color="#FFFFFF"></model-viewer>
+                        }
+                        else @if (!string.IsNullOrEmpty(product.Model2DLink))
+                        {
+                            <img src="@product.Model2DLink" alt="@product.Name" class="img-thumbnail"
+                                style="width: 100%; height: 100%" />
+                        }
                     </div>
                     <div class="card-body text-center">
                         <h5 class="card-title fw-bold">@product.Name</h5>

@@ -42,10 +42,18 @@
 					<img id="viewer2D" src="@Model.Model2DLink" alt="2D Product"
 						style="width: 100%; height: 400px; display: none; object-fit: contain;" />
 
-					<model-viewer id="viewer3D" style="width: 100%; height: 400px; object-fit: contain;"
-						src="@Model.Model3DLink" alt="3D Product" auto-rotate camera-controls
-						background-color="#FFFFFF">
-					</model-viewer>
+					@if (!string.IsNullOrEmpty(Model.Model3DLink))
+					{
+						<model-viewer id="viewer3D" style="width: 100%; height: 400px; object-fit: contain;"
+							src="@Model.Model3DLink" alt="3D Product" auto-rotate camera-controls
+							background-color="#FFFFFF">
+						</model-viewer>
+					}
+					else
+					{
+						<img id="viewer3D" src="https://static-00.iconduck.com/assets.00/blocked-icon-512x512-w0ucn4gz.png"
+							alt="2D Product" style="width: 100%; height: 400px; display: none; object-fit: contain;" />
+					}
 				</div>
 			</div>
 
@@ -61,7 +69,7 @@
 					<p class="product-description text-muted mb-3" style="font-size: 1rem;">
 						@Model.Description
 					</p>
-@* 
+					@* 
 					<div class="rating mb-3">
 						@for (int i = 0; i < 5; i++)
 						{
@@ -102,7 +110,8 @@
 							<label for="note" class="form-label text-muted" style="font-size: 0.9rem;">
 								Note to Seller:
 							</label>
-							<textarea maxlength="254" id="note" name="note" rows="4" class="form-control" style=" resize: none;"
+							<textarea maxlength="254" id="note" name="note" rows="4" class="form-control"
+								style=" resize: none;"
 								placeholder="Enter your message to the seller here..."></textarea>
 						</div>
 

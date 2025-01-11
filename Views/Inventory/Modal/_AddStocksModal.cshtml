@@ -13,7 +13,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="expiryDate" class="form-label">Expiry Date</label>
-                        <input type="date" class="form-control" id="expiryDate" required>
+                        <input type="date" class="form-control" id="expiryDate" min="" required>
                     </div>
                     <input type="hidden" id="inventoryId">
                     <div class="d-flex justify-content-between mt-3">
@@ -28,6 +28,10 @@
     </div>
 </div>
 <script>
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+    document.getElementById('expiryDate').min = formattedDate;
+
     function showAddStockForm() {
         $('#addStockModal').modal('show');
         document.getElementById("inventoryId").value = selectedInventoryId;

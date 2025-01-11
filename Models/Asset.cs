@@ -16,6 +16,7 @@ namespace PetalOrSomething.Models
         public string SearchFilter { get; set; }
         public string SortFilter { get; set; }
         public string PriceRangeFilter { get; set; }
+        public string FilterAvailable { get; set; }
         public int CurrentPage { get; set; }
         public int TotalPages { get; set; }
         public int ItemsPerPage { get; set; } = 10;

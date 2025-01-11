@@ -1,7 +1,10 @@
 using System.Text;
+using Helper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using PayPalCheckoutSdk.Core;
+using PayPalCheckoutSdk.Orders;
 using PetalOrSomething.Data;
 using PetalOrSomething.Models;
 
@@ -68,43 +71,55 @@ namespace PetalOrSomething.Controllers
                 return RedirectToAction("CartFinished");
             }
 
-            transaction.Status = transaction.RemainingBalance > 0 ? "Downpayment" : "Paid";
-            transaction.OrderStatus = "Pending";
-            transaction.PaymentMethod = "Paymongo";
-
-            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes(_configuration["PayMongo:SecretKey"])));
-            var response = await _httpClient.GetAsync(
-                "https://api.paymongo.com/v1/checkout_sessions/" + transaction.TransactionId.ToString());
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var responseContent = await response.Content.ReadAsStringAsync();
-                var jsonDeserialized = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                var client = new PayPalHttpClient(PayPalConfig.GetEnvironment());
 
-                transaction.PaymentMethod = ((string)jsonDeserialized!.data!.attributes!.payment_method_used).ToUpper();
+                var captureRequest = new OrdersCaptureRequest(transaction.OrderId);
+                captureRequest.RequestBody(new OrderActionRequest());
+
+                var response = await client.Execute(captureRequest);
+                var result = response.Result<PayPalCheckoutSdk.Orders.Order>();
+
+                if (result.Status == "COMPLETED")
+                {
+                    transaction.Status = transaction.RemainingBalance > 0 ? "Downpayment" : "Paid";
+                    transaction.OrderStatus = "Pending";
+                    transaction.PaymentMethod = "Paypal";
+
+                    var cartItemToUpdate = transaction.Products;
+                    cartItemToUpdate.ForEach(c => c.IsOrdered = true);
+                    await _context.SaveChangesAsync();
+
+                    var notification = new Notification
+                    {
+                        UserId = transaction.UserId,
+                        Title = transaction.RemainingBalance > 0 ? "Downpayment Successful" : "Payment Successful",
+                        Message = transaction.RemainingBalance > 0
+                            ? $"Your down payment of {transaction.DownPayment:C} was successful. Your remaining balance is {transaction.RemainingBalance:C}."
+                            : $"Your payment of {transaction.TotalAmount:C} was successful. Your order is now being processed.",
+                        CreatedAt = DateTime.UtcNow,
+                        IsRead = false
+                    };
+                    _context.Notifications.Add(notification);
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = transaction.RemainingBalance > 0
+                        ? "Downpayment successful! Your remaining balance is noted."
+                        : "Payment successful! Thank you for your order.";
+                    return RedirectToAction("CustomOrder", "Orders");
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Payment was not completed.";
+                    return RedirectToAction("CartFinished");
+                }
             }
-
-            var cartItemToUpdate = transaction.Products;
-            cartItemToUpdate.ForEach(c => c.IsOrdered = true);
-            await _context.SaveChangesAsync();
-
-            var notification = new Notification
+            catch (Exception ex)
             {
-                UserId = transaction.UserId,
-                Title = transaction.RemainingBalance > 0 ? "Downpayment Successful" : "Payment Successful",
-                Message = transaction.RemainingBalance > 0
-                    ? $"Your down payment of {transaction.DownPayment:C} was successful. Your remaining balance is {transaction.RemainingBalance:C}."
-                    : $"Your payment of {transaction.TotalAmount:C} was successful. Your order is now being processed.",
-                CreatedAt = DateTime.UtcNow,
-                IsRead = false
-            };
-            _context.Notifications.Add(notification);
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = transaction.RemainingBalance > 0
-                ? "Downpayment successful! Your remaining balance is noted."
-                : "Payment successful! Thank you for your order.";
-            return RedirectToAction("CustomOrder", "Orders");
+                TempData["ErrorMessage"] = $"Error capturing payment: {ex.Message}";
+                return RedirectToAction("CartFinished");
+            }
         }
 
         public async Task<IActionResult> PaymentSuccess(string reference)
@@ -121,51 +136,65 @@ namespace PetalOrSomething.Controllers
                 return RedirectToAction("CartFinished");
             }
 
-            transaction.Status = transaction.RemainingBalance > 0 ? "Downpayment" : "Paid";
-            transaction.OrderStatus = "Pending";
-            transaction.PaymentMethod = "Paymongo";
-
-            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes(_configuration["PayMongo:SecretKey"])));
-            var response = await _httpClient.GetAsync(
-                "https://api.paymongo.com/v1/checkout_sessions/" + transaction.TransactionId.ToString());
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var responseContent = await response.Content.ReadAsStringAsync();
-                var jsonDeserialized = JsonConvert.DeserializeObject<dynamic>(responseContent);
+                var client = new PayPalHttpClient(PayPalConfig.GetEnvironment());
 
-                transaction.PaymentMethod = ((string)jsonDeserialized!.data!.attributes!.payment_method_used).ToUpper();
-            }
+                var captureRequest = new OrdersCaptureRequest(transaction.OrderId);
+                captureRequest.RequestBody(new OrderActionRequest());
 
-            var cartItemToUpdate = transaction.Products;
-            foreach (var cartItem in cartItemToUpdate)
-            {
-                if (cartItem.Product != null)
+                var response = await client.Execute(captureRequest);
+                var result = response.Result<PayPalCheckoutSdk.Orders.Order>();
+
+                if (result.Status == "COMPLETED")
                 {
-                    cartItem.Product.RemoveStock(cartItem.Quantity);
+                    transaction.Status = transaction.RemainingBalance > 0 ? "Downpayment" : "Paid";
+                    transaction.OrderStatus = "Pending";
+                    transaction.PaymentMethod = "Paypal";
+
+                    var cartItemToUpdate = transaction.Products;
+                    foreach (var cartItem in cartItemToUpdate)
+                    {
+                        if (cartItem.Product != null)
+                        {
+                            cartItem.Product.RemoveStock(cartItem.Quantity);
+                        }
+                    }
+                    cartItemToUpdate.ForEach(c => c.IsOrdered = true);
+
+                    await _context.SaveChangesAsync();
+
+                    var notification = new Notification
+                    {
+                        UserId = transaction.UserId,
+                        Title = transaction.RemainingBalance > 0 ? "Downpayment Successful" : "Payment Successful",
+                        Message = transaction.RemainingBalance > 0
+                            ? $"Your down payment of {transaction.DownPayment:C} was successful. Your remaining balance is {transaction.RemainingBalance:C}."
+                            : $"Your payment of {transaction.TotalAmount:C} was successful. Your order is now being processed.",
+                        CreatedAt = DateTime.UtcNow,
+                        IsRead = false
+                    };
+                    _context.Notifications.Add(notification);
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = transaction.RemainingBalance > 0
+                        ? "Downpayment successful! Your remaining balance is noted."
+                        : "Payment successful! Thank you for your order.";
+                    return RedirectToAction("OrderHistory", "Orders");
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Payment was not completed.";
+                    return RedirectToAction("CartFinished");
                 }
             }
-            cartItemToUpdate.ForEach(c => c.IsOrdered = true);
-            await _context.SaveChangesAsync();
-
-            var notification = new Notification
+            catch (Exception ex)
             {
-                UserId = transaction.UserId,
-                Title = transaction.RemainingBalance > 0 ? "Downpayment Successful" : "Payment Successful",
-                Message = transaction.RemainingBalance > 0
-                    ? $"Your down payment of {transaction.DownPayment:C} was successful. Your remaining balance is {transaction.RemainingBalance:C}."
-                    : $"Your payment of {transaction.TotalAmount:C} was successful. Your order is now being processed.",
-                CreatedAt = DateTime.UtcNow,
-                IsRead = false
-            };
-            _context.Notifications.Add(notification);
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = transaction.RemainingBalance > 0
-                ? "Downpayment successful! Your remaining balance is noted."
-                : "Payment successful! Thank you for your order.";
-            return RedirectToAction("OrderHistory", "Orders");
+                TempData["ErrorMessage"] = $"Error capturing payment: {ex.Message}";
+                return RedirectToAction("CartFinished");
+            }
         }
+
 
         public async Task<IActionResult> PaymentCancelled(string reference)
         {
@@ -195,6 +224,80 @@ namespace PetalOrSomething.Controllers
             transaction.Status = "Cancelled";
             await _context.SaveChangesAsync();
             TempData["ErrorMessage"] = "Payment was cancelled. Please try again.";
+            return RedirectToAction("CartFinished");
+        }
+
+        public async Task<IActionResult> DeleteFinishedOrders()
+        {
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (!int.TryParse(userIdString, out int userId))
+            {
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction("CartFinished");
+            }
+
+            var user = await _context.Account.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction("CartFinished");
+            }
+
+            var cartItems = await _context.CartFinishedItems
+                .Where(c => c.UserId == user.Id)
+                .Where(c => c.Selected == true)
+                .Where(c => c.IsOrdered == false)
+                .ToListAsync();
+
+            if (cartItems.Count == 0)
+            {
+                TempData["ErrorMessage"] = "No items in selected.";
+                return RedirectToAction("CartFinished");
+            }
+
+            foreach (var cart in cartItems)
+            {
+                _context.CartFinishedItems.Remove(cart);
+                await _context.SaveChangesAsync();
+            }
+            TempData["SuccessMessage"] = "Items successfully deleted.";
+            return RedirectToAction("CartFinished");
+        }
+
+        public async Task<IActionResult> DeleteOrders()
+        {
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (!int.TryParse(userIdString, out int userId))
+            {
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction("CartFinished");
+            }
+
+            var user = await _context.Account.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction("CartFinished");
+            }
+
+            var cartItems = await _context.CartItems
+                .Where(c => c.UserId == user.Id)
+                .Where(c => c.Selected == true)
+                .Where(c => c.IsOrdered == false)
+                .ToListAsync();
+
+            if (cartItems.Count == 0)
+            {
+                TempData["ErrorMessage"] = "No items in selected.";
+                return RedirectToAction("CartFinished");
+            }
+
+            foreach (var cart in cartItems)
+            {
+                _context.CartItems.Remove(cart);
+                await _context.SaveChangesAsync();
+            }
+            TempData["SuccessMessage"] = "Items successfully deleted.";
             return RedirectToAction("CartFinished");
         }
 
@@ -228,9 +331,6 @@ namespace PetalOrSomething.Controllers
 
             var referenceNumber = Guid.NewGuid().ToString();
 
-            var successUrl = $"{Request.Scheme}://{Request.Host}/Cart/PaymentSuccess?reference={referenceNumber}";
-            var cancelUrl = $"{Request.Scheme}://{Request.Host}/Cart/PaymentCancelled?reference={referenceNumber}";
-
             double shippingFee = willPickup == "Pickup" ? 0 : 25;
             double totalAmount = cartItems.Sum(c => c.TotalPrice) + shippingFee;
 
@@ -238,123 +338,81 @@ namespace PetalOrSomething.Controllers
             double remainingBalance = paymentType == "Partial" ? totalAmount - calculatedDownPayment : 0;
             double downPaymentPercentage = paymentType == "Partial" ? downPayment / 100.0 : 1.0;
 
-            if (remainingBalance < 100 && remainingBalance > 0)
+            double firstPayment = 0;
+            foreach (var item in cartItems)
             {
-                TempData["ErrorMessage"] = "Sorry but the minimum remaining balance is 100 PHP.";
-                return RedirectToAction("CartFinished");
+                firstPayment += item.TotalPrice * downPaymentPercentage;
             }
-
-            if (calculatedDownPayment < 100)
-            {
-                TempData["ErrorMessage"] = "Sorry but the minimum down payment is 100 PHP.";
-                return RedirectToAction("CartFinished");
-            }
-
-            var adjustedLineItems = cartItems.Select((item, index) => new
-            {
-                currency = "PHP",
-                images = new string[] { item.Product.Model2DLink },
-                amount = (int)(item.Product.Price * downPaymentPercentage * 100),
-                name = paymentType == "Partial"
-                    ? $"{item.Product.Name} - {downPayment}% Down Payment"
-                    : item.Product.Name,
-                quantity = item.Quantity,
-                description = paymentType == "Partial"
-                ? "Partial payment for this product"
-                : "Full payment for this product"
-            }).ToList();
-
             if (shippingFee > 0)
             {
-                adjustedLineItems.Add(new
-                {
-                    currency = "PHP",
-                    images = new string[] { "https://cdn-icons-png.flaticon.com/512/5166/5166991.png" },
-                    amount = (int)(shippingFee * 100),
-                    name = "Shipping Fee",
-                    quantity = 1,
-                    description = "Shipping fee for your order"
-                });
+                firstPayment += 25;
             }
 
-            var payload = new
+            var orderRequest = new OrdersCreateRequest();
+            orderRequest.Prefer("return=representation");
+            orderRequest.RequestBody(new OrderRequest
             {
-                data = new
+                CheckoutPaymentIntent = "CAPTURE",
+                ApplicationContext = new ApplicationContext
                 {
-                    attributes = new
+                    ReturnUrl = Url.Action("PaymentSuccess", "Cart", new { reference = referenceNumber }, Request.Scheme),
+                    CancelUrl = Url.Action("PaymentCancelled", "Cart", new {  reference = referenceNumber }, Request.Scheme),
+                    UserAction = "PAY_NOW"
+                },
+                PurchaseUnits = new List<PurchaseUnitRequest>
+                {
+                    new PurchaseUnitRequest
                     {
-                        billing = new
+                        AmountWithBreakdown = new AmountWithBreakdown
                         {
-                            address = new
-                            {
-                                line1 = user.Location,
-                                // city = "Calamba City",
-                                // state = "Laguna",
-                                // postal_code = "4027",
-                                country = "PH"
-                            },
-                            name = user.FullName,
-                            email = user.Email,
-                            phone = user.PhoneNumber
+                            CurrencyCode = "PHP",
+                            Value = firstPayment.ToString("F2")
                         },
-                        send_email_receipt = true,
-                        show_description = true,
-                        show_line_items = true,
-                        payment_method_types = new string[] { "qrph", "billease", "card", "dob", "dob_ubp", "brankas_bdo", "gcash", "brankas_landbank", "brankas_metrobank", "grab_pay", "paymaya" },
-                        line_items = adjustedLineItems,
-                        description = "Payment for selected products",
-                        reference_number = referenceNumber,
-                        statement_descriptor = "Petal and Planes",
-                        success_url = successUrl,
-                        cancel_url = cancelUrl,
+                        Description = "Balance Fee"
                     }
                 }
-            };
+            });
 
-            var jsonPayload = JsonConvert.SerializeObject(payload);
-            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
             try
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes(_configuration["PayMongo:SecretKey"])));
-                var response = await _httpClient.PostAsync("https://api.paymongo.com/v1/checkout_sessions", content);
-                if (response.IsSuccessStatusCode)
+                var client = new PayPalHttpClient(PayPalConfig.GetEnvironment());
+                var response = await client.Execute(orderRequest);
+                var result = response.Result<PayPalCheckoutSdk.Orders.Order>();
+
+                var approvalUrl = result.Links.FirstOrDefault(link => link.Rel == "approve")?.Href;
+                if (approvalUrl != null)
                 {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-
-                    var jsonDeserialized = JsonConvert.DeserializeObject<dynamic>(responseContent);
-                    var paymentLink = jsonDeserialized?.data?.attributes?.checkout_url;
-
                     var transaction = new TransactionOrder
                     {
                         UserId = user.Id,
+                        OrderId = result.Id,
                         Products = cartItems,
                         ReferenceNumber = referenceNumber,
-                        TransactionId = jsonDeserialized!.data!.id,
+                        TransactionId = Guid.NewGuid().ToString(),
                         TotalAmount = totalAmount,
                         ShippingFee = shippingFee,
                         WillPickUp = willPickup == "Pickup",
-                        PaymentLink = paymentLink!.ToString(),
+                        PaymentLink = approvalUrl,
                         DownPayment = calculatedDownPayment,
                         RemainingBalance = remainingBalance,
                         Status = "Pending",
                         CreatedAt = DateTime.UtcNow,
                         ExpirationTime = DateTime.UtcNow.AddMinutes(15)
                     };
-
                     _context.TransactionOrders.Add(transaction);
                     _context.SaveChanges();
-                    return Redirect(paymentLink.ToString());
+                    return Redirect(approvalUrl);
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Failed to create payment link.";
-                    return RedirectToAction("CartFinished");
+                    TempData["ErrorMessage"] = "Payment approval URL not found.";
+                    return RedirectToAction("PaymentHistory");
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "An error occurred while processing your payment.";
-                return RedirectToAction("CartFinished");
+                TempData["ErrorMessage"] = $"Error during payment: {ex.Message}";
+                return RedirectToAction("PaymentHistory");
             }
         }
 
@@ -389,8 +447,6 @@ namespace PetalOrSomething.Controllers
             }
 
             var referenceNumber = Guid.NewGuid().ToString();
-            var successUrl = $"{Request.Scheme}://{Request.Host}/Cart/PaymentCustomSuccess?reference={referenceNumber}";
-            var cancelUrl = $"{Request.Scheme}://{Request.Host}/Cart/PaymentCustomCancelled?reference={referenceNumber}";
 
             double shippingFee = willPickup == "Pickup" ? 0 : 25;
             double totalAmount = cartItems.Sum(c => c.TotalPrice * c.Quantity) + shippingFee;
@@ -399,127 +455,81 @@ namespace PetalOrSomething.Controllers
             double remainingBalance = paymentType == "Partial" ? totalAmount - calculatedDownPayment : 0;
             double downPaymentPercentage = paymentType == "Partial" ? downPayment / 100.0 : 1.0;
 
-            if (remainingBalance < 100 && remainingBalance > 0)
+            double firstPayment = 0;
+            foreach (var item in cartItems)
             {
-                TempData["ErrorMessage"] = "Sorry but the minimum remaining balance is 100 PHP.";
-                return RedirectToAction("CartItem");
+                firstPayment += item.TotalPrice * item.Quantity * downPaymentPercentage;
             }
-
-            if (calculatedDownPayment < 100)
-            {
-                TempData["ErrorMessage"] = "Sorry but the minimum down payment is 100 PHP.";
-                return RedirectToAction("CartItem");
-            }
-
-            var adjustedLineItems = cartItems.Select((item, index) => new
-            {
-                currency = "PHP",
-                images = new string[] { "https://cdn-icons-png.flaticon.com/512/5166/5166991.png" },
-                amount = (int)(item.TotalPrice * downPaymentPercentage * 100),
-                name = paymentType == "Partial"
-                    ? $"{item.ProductName} - {downPayment}% Down Payment"
-                    : item.ProductName,
-                quantity = item.Quantity,
-                description = paymentType == "Partial"
-                ? "Partial payment for this product"
-                : "Full payment for this product"
-            }).ToList();
-
             if (shippingFee > 0)
             {
-                adjustedLineItems.Add(new
-                {
-                    currency = "PHP",
-                    images = new string[] { "https://cdn-icons-png.flaticon.com/512/5166/5166991.png" },
-                    amount = (int)(shippingFee * 100),
-                    name = "Shipping Fee",
-                    quantity = 1,
-                    description = "Shipping fee for your order"
-                });
+                firstPayment += 25;
             }
+            firstPayment = 37502.50;
 
-            var payload = new
+                var orderRequest = new OrdersCreateRequest();
+            orderRequest.Prefer("return=representation");
+            orderRequest.RequestBody(new OrderRequest
             {
-                data = new
+                CheckoutPaymentIntent = "CAPTURE",
+                ApplicationContext = new ApplicationContext
                 {
-                    attributes = new
+                    ReturnUrl = Url.Action("PaymentCustomSuccess", "Cart", new { reference = referenceNumber }, Request.Scheme),
+                    CancelUrl = Url.Action("PaymentCustomCancelled", "Cart", new { reference = referenceNumber }, Request.Scheme)
+                },
+                PurchaseUnits = new List<PurchaseUnitRequest>
+                {
+                    new PurchaseUnitRequest
                     {
-                        billing = new
+                        AmountWithBreakdown = new AmountWithBreakdown
                         {
-                            address = new
-                            {
-                                line1 = user.Location,
-                                city = "Calamba City",
-                                state = "Laguna",
-                                postal_code = "4027",
-                                country = "PH"
-                            },
-                            name = user.FullName,
-                            email = user.Email,
-                            phone = user.PhoneNumber
+                            CurrencyCode = "PHP",
+                            Value = firstPayment.ToString("F2")
                         },
-                        send_email_receipt = true,
-                        show_description = true,
-                        show_line_items = true,
-                        payment_method_types = new string[] { "qrph", "billease", "card", "dob", "dob_ubp", "brankas_bdo", "gcash", "brankas_landbank", "brankas_metrobank", "grab_pay", "paymaya" },
-                        line_items = adjustedLineItems,
-                        description = "Payment for selected products",
-                        reference_number = referenceNumber,
-                        statement_descriptor = "Petal and Planes",
-                        success_url = successUrl,
-                        cancel_url = cancelUrl,
+                        Description = "Balance Fee"
                     }
                 }
-            };
-
-            var jsonPayload = JsonConvert.SerializeObject(payload);
-            Console.WriteLine("-----------------------------");
-            Console.WriteLine(jsonPayload);
-            Console.WriteLine("-----------------------------");
-            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+            });
 
             try
             {
-                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes(_configuration["PayMongo:SecretKey"])));
-                var response = await _httpClient.PostAsync("https://api.paymongo.com/v1/checkout_sessions", content);
-                if (response.IsSuccessStatusCode)
+                var client = new PayPalHttpClient(PayPalConfig.GetEnvironment());
+                var response = await client.Execute(orderRequest);
+                var result = response.Result<PayPalCheckoutSdk.Orders.Order>();
+
+                var approvalUrl = result.Links.FirstOrDefault(link => link.Rel == "approve")?.Href;
+                if (approvalUrl != null)
                 {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-
-                    var jsonDeserialized = JsonConvert.DeserializeObject<dynamic>(responseContent);
-                    var paymentLink = jsonDeserialized?.data?.attributes?.checkout_url;
-
                     var transaction = new TransactionCustomOrder
                     {
                         UserId = user.Id,
+                        OrderId = result.Id,
                         Products = cartItems,
                         ReferenceNumber = referenceNumber,
-                        TransactionId = jsonDeserialized!.data!.id,
+                        TransactionId = Guid.NewGuid().ToString(),
                         TotalAmount = totalAmount,
                         ShippingFee = shippingFee,
                         WillPickUp = willPickup == "Pickup",
-                        PaymentLink = paymentLink!.ToString(),
+                        PaymentLink = approvalUrl,
                         DownPayment = calculatedDownPayment,
                         RemainingBalance = remainingBalance,
                         Status = "Pending",
                         CreatedAt = DateTime.UtcNow,
                         ExpirationTime = DateTime.UtcNow.AddMinutes(15)
                     };
-
                     _context.TransactionCustomOrders.Add(transaction);
                     _context.SaveChanges();
-                    return Redirect(paymentLink.ToString());
+                    return Redirect(approvalUrl);
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Failed to create payment link.";
-                    return RedirectToAction("CartItem");
+                    TempData["ErrorMessage"] = "Payment approval URL not found.";
+                    return RedirectToAction("PaymentHistory");
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "An error occurred while processing your payment.";
-                return RedirectToAction("CartItem");
+                TempData["ErrorMessage"] = $"Error during payment: {ex.Message}";
+                return RedirectToAction("PaymentHistory");
             }
         }
 
@@ -531,7 +541,7 @@ namespace PetalOrSomething.Controllers
                 return RedirectToAction("CartFinished");
             }
 
-            var order = await _context.CartFinishedItems.FindAsync(id); 
+            var order = await _context.CartFinishedItems.FindAsync(id);
             if (order == null)
             {
                 TempData["ErrorMessage"] = "Order not found.";

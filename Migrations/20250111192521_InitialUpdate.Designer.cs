@@ -12,7 +12,7 @@ using PetalOrSomething.Data;
 namespace PetalOrSomething.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241231193955_InitialUpdate")]
+    [Migration("20250111192521_InitialUpdate")]
     partial class InitialUpdate
     {
         /// <inheritdoc />
@@ -736,6 +736,10 @@ namespace PetalOrSomething.Migrations
 
                     b.Property<bool>("IsFeedback")
                         .HasColumnType("bit");
+
+                    b.Property<string>("OrderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OrderStatus")
                         .IsRequired()
