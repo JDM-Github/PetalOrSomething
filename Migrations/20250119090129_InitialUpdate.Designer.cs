@@ -12,7 +12,7 @@ using PetalOrSomething.Data;
 namespace PetalOrSomething.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250119073547_InitialUpdate")]
+    [Migration("20250119090129_InitialUpdate")]
     partial class InitialUpdate
     {
         /// <inheritdoc />
