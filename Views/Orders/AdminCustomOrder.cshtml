@@ -198,7 +198,40 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach (var product in order.Order.Products)
+                                            @foreach (var product in order.Order.Products.Select(p => new
+                                            {
+                                                ProductName = p.ProductName,
+                                                Model2DLink = "",
+                                                Model3DLink = p.Model3DLink,
+                                                Quantity = p.Quantity,
+                                                Price = p.TotalPrice,
+                                                Total = p.TotalPrice * p.Quantity,
+                                                Note = p.Note,
+                                                ViewAction = Url.Action("View3D", "Admin", new
+                                                {
+                                                    modelUrl = p.Model3DLink,
+                                                    note = p.Note,
+                                                    customization = p.CustomizationJson
+                                                }),
+                                                AddAction = Url.Action("AddProduct", "Admin", new
+                                                {
+                                                    productName = p.ProductName,
+                                                    modelUrl = p.Model3DLink,
+                                                })
+                                            })
+                                           .Concat(order.Order.FinishedProducts.Select(fp => new
+                                           {
+                                               ProductName = fp.Product.Name,
+                                               Model2DLink = fp.Product.Model2DLink,
+                                               Model3DLink = fp.Product.Model3DLink,
+                                               Quantity = fp.Quantity,
+                                               Price = fp.Product.Price,
+                                               Total = fp.TotalPrice,
+                                               Note = fp.Note,
+                                               ViewAction = (string)(null),
+                                               AddAction = (string)(null)
+                                           })))
+                                            @* @foreach (var product in order.Order.Products) *@
                                             {
                                                 <tr>
                                                     <td>@order.UserEmail</td>
@@ -216,8 +249,8 @@
                                                         }
                                                     </td>
                                                     <td>@product.Quantity</td>
-                                                    <td>@product.TotalPrice.ToString("C")</td>
-                                                    <td>@((product.TotalPrice * product.Quantity).ToString("C"))</td>
+                                                    <td>@product.Price.ToString("C")</td>
+                                                    <td>@((product.Price * product.Quantity).ToString("C"))</td>
                                                     <td style="max-width: 200px;">
                                                         <div style="max-height: 100px; overflow-y:
                                                         auto; word-wrap: break-word;">
@@ -225,10 +258,24 @@
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <div class="d-flex flex-column">
+                                                        @* <div class="d-flex flex-column">
                                                             <a href="@Url.Action("View3D", "Admin", new { modelUrl = product.Model3DLink, note = product.Note, customization = product.CustomizationJson })"
                                                                 type="submit" class="btn btn-outline-success">View</a>
+                                                        </div> *@
+                                                        <div class="d-flex flex-column">
+                                                            @if (!string.IsNullOrEmpty(product.ViewAction))
+                                                            {
+
+                                                                <a href="@product.ViewAction" type="submit"
+                                                                    class="btn btn-outline-success">View</a>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(product.AddAction))
+                                                            {
+                                                                <a href="@product.AddAction" type="submit"
+                                                                    class="btn btn-outline-primary">Add</a>
+                                                            }
                                                         </div>
+
                                                     </td>
                                                 </tr>
                                             }

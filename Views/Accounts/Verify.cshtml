@@ -7,10 +7,10 @@
                 </div>
                 <div class="card-body">
                     <p class="text-center">
-                        An email with a verification code was sent to: <strong>@ViewData["Email"]</strong>.
+                        An email with a verification code was sent to: <strong>@ViewBag.Email</strong>.
                     </p>
                     <form asp-action="Verify" method="post">
-                        <input type="hidden" name="Email" value="@ViewData["Email"]" />
+                        <input type="hidden" name="Email" value="@ViewBag.Email" />
                         <div class="form-group mb-3">
                             <label for="VerificationCode" class="form-label">Verification Code</label>
                             <input type="text" name="VerificationCode" class="form-control"
@@ -25,7 +25,7 @@
                     <div class="d-flex justify-content-between align-items-center mt-4">
                         <a asp-action="Login" class="btn btn-outline-danger text-decoration-none">Back to Login</a>
                         <form asp-action="ResendCode" method="post" class="d-inline">
-                            <input type="hidden" name="Email" value="@ViewData["Email"]" />
+                            <input type="hidden" name="Email" value="@ViewBag.Email" />
                             <button type="submit" class="btn btn-outline-secondary text-decoration-none">Resend
                                 Code</button>
                         </form>

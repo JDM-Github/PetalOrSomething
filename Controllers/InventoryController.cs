@@ -3,6 +3,7 @@ using PetalOrSomething.Models;
 using PetalOrSomething.Data;
 using Microsoft.EntityFrameworkCore;
 using InquiryManagementApp.Service;
+using PayPalCheckoutSdk.Orders;
 
 namespace PetalOrSomething.Controllers
 {
@@ -84,9 +85,9 @@ namespace PetalOrSomething.Controllers
         }
 
         [HttpGet]
-        public IActionResult Create()
+        public IActionResult Create(string productName = "", string modelUrl = "")
         {
-            return View();
+            return View(new FlowerInventory { Name = productName, Model3DLink = modelUrl });
         }
 
         [HttpPost]

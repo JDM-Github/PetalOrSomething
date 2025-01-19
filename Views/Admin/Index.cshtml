@@ -84,7 +84,7 @@
                                                 <td>@transaction.CreatedAt.ToString("MM/dd/yyyy")</td>
                                                 <td>
                                                     <div class="d-flex flex-column">
-                                                        <a href="@Url.Action("Index", "Orders", new { page = 1, search = transaction.Order.ReferenceNumber})"
+                                                        <a href="@Url.Action("AdminCustomOrder", "Orders", new { page = 1, search = transaction.Order.ReferenceNumber})"
                                                             class="btn btn-sm btn-outline-success">
                                                             View Order
                                                         </a>

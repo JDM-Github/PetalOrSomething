@@ -10,7 +10,7 @@ namespace PetalOrSomething.Models
     public class TransactionViewModel
     {
         public int TransactionId { get; set; }
-        public TransactionOrder Order { get; set; }
+        public TransactionCustomOrder Order { get; set; }
         public double Total { get; set; }
         public DateTime CreatedAt { get; set; }
     }

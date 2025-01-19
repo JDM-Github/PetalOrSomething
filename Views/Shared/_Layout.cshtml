@@ -46,14 +46,13 @@
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Asset"
                                     asp-action="Index">Assets</a>
                             </li>
-                            <li class="nav-item">
+                            @* <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Orders"
                                     asp-action="Index">Orders</a>
-                            </li>
+                            </li> *@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Orders"
-                                    asp-action="AdminCustomOrder">Custom
-                                    Orders</a>
+                                    asp-action="AdminCustomOrder">Orders</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Feedback"
@@ -78,21 +77,24 @@
                                     <a class="nav-link text-dark" asp-area="" asp-controller="Home"
                                         asp-action="ProductEdit">Customize</a>
                                 </li>
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarDropdown" role="button"
+                                <li class="nav-item">
+                                    @* <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarDropdown" role="button"
                                         data-bs-toggle="dropdown" aria-expanded="false">
                                         Cart
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                    </a> *@
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Cart" asp-action="Cart">Cart</a>
+                                    @* <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                                         <li><a class="dropdown-item" asp-area="" asp-controller="Cart"
-                                                asp-action="CartFinished">Cart</a></li>
+                                                asp-action="Cart">Cart</a></li>
                                         <li><a class="dropdown-item" asp-area="" asp-controller="Cart"
                                                 asp-action="CartItem">Custom Cart</a></li>
-                                    </ul>
+                                    </ul> *@
                                 </li>
 
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarDropdown" role="button"
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Orders"
+                                        asp-action="CustomOrder">Orders</a>
+                                    @* <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarDropdown" role="button"
                                         data-bs-toggle="dropdown" aria-expanded="false">
                                         Orders
                                     </a>
@@ -101,7 +103,7 @@
                                                 asp-action="OrderHistory">Order</a></li>
                                         <li><a class="dropdown-item" asp-area="" asp-controller="Orders"
                                                 asp-action="CustomOrder">Custom Order</a></li>
-                                    </ul>
+                                    </ul> *@
 
                                 </li>
                             }

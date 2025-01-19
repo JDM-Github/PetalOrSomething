@@ -1,4 +1,4 @@
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<div class="modal fade" id="deleteModalFinished" tabindex="-1" aria-labelledby="deleteModalFinishedLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
@@ -26,17 +26,17 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        var deleteModal = document.getElementById('deleteModal');
-        deleteModal.addEventListener('show.bs.modal', function (event) {
+        var deleteModalFinished = document.getElementById('deleteModalFinished');
+        deleteModalFinished.addEventListener('show.bs.modal', function (event) {
             var button = event.relatedTarget;
             var productId = button.getAttribute('data-id');
             var productName = button.getAttribute('data-name');
             var model3DLink = button.getAttribute('data-model3d');
 
-            var productNameElement = deleteModal.querySelector('#productName');
+            var productNameElement = deleteModalFinished.querySelector('#productName');
             productNameElement.textContent = productName;
 
-            var modelViewer = deleteModal.querySelector('#modelViewer');
+            var modelViewer = deleteModalFinished.querySelector('#modelViewer');
             modelViewer.setAttribute('src', model3DLink);
 
             var deleteLink = document.getElementById('deleteId');

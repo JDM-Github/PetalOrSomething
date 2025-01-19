@@ -96,6 +96,9 @@ namespace PetalOrSomething.Controllers
             var query = _context.TransactionCustomOrders
                 .Where(o => o.UserId == userId)
                 .Include(o => o.Products)
+                .Include(o => o.FinishedProducts)
+                .ThenInclude(o => o.Product)
+                .ThenInclude(o => o.Stocks)
                 .AsQueryable();
 
             if (status != "All")
@@ -273,6 +276,9 @@ namespace PetalOrSomething.Controllers
             var query = _context.TransactionCustomOrders
                 .Where(o => o.Status == "Paid")
                 .Include(o => o.Products)
+                .Include(o => o.FinishedProducts)
+                .ThenInclude(o => o.Product)
+                .ThenInclude(o => o.Stocks)
                 .AsQueryable();
 
             if (status != "All")

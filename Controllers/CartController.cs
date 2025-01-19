@@ -124,8 +124,9 @@ namespace PetalOrSomething.Controllers
 
         public async Task<IActionResult> PaymentSuccess(string reference)
         {
-            var transaction = await _context.TransactionOrders
+            var transaction = await _context.TransactionCustomOrders
                 .Include(t => t.Products)
+                .Include(t => t.FinishedProducts)
                 .ThenInclude(p => p.Product)
                 .ThenInclude(p => p.Stocks)
                 .FirstOrDefaultAsync(t => t.ReferenceNumber == reference);
@@ -152,7 +153,8 @@ namespace PetalOrSomething.Controllers
                     transaction.OrderStatus = "Pending";
                     transaction.PaymentMethod = "Paypal";
 
-                    var cartItemToUpdate = transaction.Products;
+                    var cartItemToUpdate = transaction.FinishedProducts;
+                    var cartFinishedItemToUpdate = transaction.Products;
                     foreach (var cartItem in cartItemToUpdate)
                     {
                         if (cartItem.Product != null)
@@ -161,7 +163,7 @@ namespace PetalOrSomething.Controllers
                         }
                     }
                     cartItemToUpdate.ForEach(c => c.IsOrdered = true);
-
+                    cartFinishedItemToUpdate.ForEach(c => c.IsOrdered = true);
                     await _context.SaveChangesAsync();
 
                     var notification = new Notification
@@ -184,12 +186,18 @@ namespace PetalOrSomething.Controllers
                 }
                 else
                 {
+                    _context.TransactionCustomOrders.Remove(transaction);
+                    await _context.SaveChangesAsync();
+
                     TempData["ErrorMessage"] = "Payment was not completed.";
                     return RedirectToAction("CartFinished");
                 }
             }
             catch (Exception ex)
             {
+                _context.TransactionCustomOrders.Remove(transaction);
+                await _context.SaveChangesAsync();
+
                 TempData["ErrorMessage"] = $"Error capturing payment: {ex.Message}";
                 return RedirectToAction("CartFinished");
             }
@@ -206,8 +214,12 @@ namespace PetalOrSomething.Controllers
                 TempData["ErrorMessage"] = "This transaction has expired.";
                 return RedirectToAction("CartFinished");
             }
-            transaction.Status = "Cancelled";
+            // transaction.Status = "Cancelled";
+            // await _context.SaveChangesAsync();
+
+            _context.TransactionOrders.Remove(transaction);
             await _context.SaveChangesAsync();
+
             TempData["ErrorMessage"] = "Payment was cancelled. Please try again.";
             return RedirectToAction("CartFinished");
         }
@@ -307,13 +319,15 @@ namespace PetalOrSomething.Controllers
             var userIdString = HttpContext.Session.GetString("UserId");
             if (!int.TryParse(userIdString, out int userId))
             {
-                return Unauthorized();
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction("CartFinished");
             }
 
             var user = await _context.Account.FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
-                return Unauthorized();
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction("CartFinished");
             }
 
             var cartItems = await _context.CartFinishedItems
@@ -329,7 +343,7 @@ namespace PetalOrSomething.Controllers
                 return RedirectToAction("CartFinished");
             }
 
-            var referenceNumber = Guid.NewGuid().ToString();
+            var referenceNumber = $"REF-{new Random().Next(1000000000, 2000000000)}";
 
             double shippingFee = willPickup == "Pickup" ? 0 : 25;
             double totalAmount = cartItems.Sum(c => c.TotalPrice) + shippingFee;
@@ -356,7 +370,7 @@ namespace PetalOrSomething.Controllers
                 ApplicationContext = new ApplicationContext
                 {
                     ReturnUrl = Url.Action("PaymentSuccess", "Cart", new { reference = referenceNumber }, Request.Scheme),
-                    CancelUrl = Url.Action("PaymentCancelled", "Cart", new {  reference = referenceNumber }, Request.Scheme),
+                    CancelUrl = Url.Action("PaymentCancelled", "Cart", new { reference = referenceNumber }, Request.Scheme),
                     UserAction = "PAY_NOW"
                 },
                 PurchaseUnits = new List<PurchaseUnitRequest>
@@ -440,16 +454,24 @@ namespace PetalOrSomething.Controllers
                 .Where(c => c.IsOrdered == false)
                 .ToListAsync();
 
-            if (cartItems.Count == 0)
+            var cartItemsFinished = await _context.CartFinishedItems
+                .Include(c => c.Product)
+                .Where(c => c.UserId == user.Id)
+                .Where(c => c.Selected == true)
+                .Where(c => c.IsOrdered == false)
+                .ToListAsync();
+
+            if (cartItems.Count == 0 && cartItemsFinished.Count == 0)
             {
                 TempData["ErrorMessage"] = "No items in selected.";
                 return RedirectToAction("CartItem");
             }
 
-            var referenceNumber = Guid.NewGuid().ToString();
+            var referenceNumber = $"REF-{new Random().Next(1000000000, 2000000000)}";
+
 
             double shippingFee = willPickup == "Pickup" ? 0 : 25;
-            double totalAmount = cartItems.Sum(c => c.TotalPrice * c.Quantity) + shippingFee;
+            double totalAmount = cartItems.Sum(c => c.TotalPrice * c.Quantity) + cartItemsFinished.Sum(c => c.TotalPrice) + shippingFee;
 
             double calculatedDownPayment = paymentType == "Partial" ? totalAmount * (downPayment / 100.0) : totalAmount;
             double remainingBalance = paymentType == "Partial" ? totalAmount - calculatedDownPayment : 0;
@@ -460,21 +482,24 @@ namespace PetalOrSomething.Controllers
             {
                 firstPayment += item.TotalPrice * item.Quantity * downPaymentPercentage;
             }
+            foreach (var item in cartItemsFinished)
+            {
+                firstPayment += item.TotalPrice * downPaymentPercentage;
+            }
             if (shippingFee > 0)
             {
                 firstPayment += 25;
             }
-            firstPayment = 37502.50;
 
-                var orderRequest = new OrdersCreateRequest();
+            var orderRequest = new OrdersCreateRequest();
             orderRequest.Prefer("return=representation");
             orderRequest.RequestBody(new OrderRequest
             {
                 CheckoutPaymentIntent = "CAPTURE",
                 ApplicationContext = new ApplicationContext
                 {
-                    ReturnUrl = Url.Action("PaymentCustomSuccess", "Cart", new { reference = referenceNumber }, Request.Scheme),
-                    CancelUrl = Url.Action("PaymentCustomCancelled", "Cart", new { reference = referenceNumber }, Request.Scheme)
+                    ReturnUrl = Url.Action("PaymentSuccess", "Cart", new { reference = referenceNumber }, Request.Scheme),
+                    CancelUrl = Url.Action("PaymentCancelled", "Cart", new { reference = referenceNumber }, Request.Scheme)
                 },
                 PurchaseUnits = new List<PurchaseUnitRequest>
                 {
@@ -504,6 +529,7 @@ namespace PetalOrSomething.Controllers
                         UserId = user.Id,
                         OrderId = result.Id,
                         Products = cartItems,
+                        FinishedProducts = cartItemsFinished,
                         ReferenceNumber = referenceNumber,
                         TransactionId = Guid.NewGuid().ToString(),
                         TotalAmount = totalAmount,
@@ -698,6 +724,93 @@ namespace PetalOrSomething.Controllers
 
             return View(model);
         }
+
+        public async Task<IActionResult> Cart(int page = 1, string search = "")
+        {
+            int pageSize = 10;
+
+            var userIdString = HttpContext.Session.GetString("UserId");
+            if (!int.TryParse(userIdString, out int userId))
+            {
+                return Unauthorized();
+            }
+
+            var user = await _context.Account.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var cartItems = await _context.CartItems
+                .Where(c => c.IsOrdered == false && c.UserId == userId &&
+                            (string.IsNullOrEmpty(search) || c.ProductName.Contains(search)))
+                .Select(c => new UnifiedCartItem
+                {
+                    Id = c.Id,
+                    ProductName = c.ProductName,
+                    Quantity = c.Quantity,
+                    TotalPrice = c.TotalPrice,
+                    IsFinished = false,
+                    Selected = c.Selected,
+                    Model3DLink = c.Model3DLink,
+                    Model2DLink = "",
+                    Note = c.Note,
+                    CustomizationJson = c.CustomizationJson
+                })
+                .ToListAsync();
+
+            var finishedItems = await _context.CartFinishedItems
+                .Include(c => c.Product)
+                .Where(f => f.IsOrdered == false && f.UserId == userId &&
+                            (string.IsNullOrEmpty(search) || f.Product.Name.Contains(search)))
+                .Select(f => new UnifiedCartItem
+                {
+                    Id = f.Id,
+                    ProductName = f.Product.Name,
+                    Quantity = f.Quantity,
+                    TotalPrice = f.TotalPrice,
+                    IsFinished = true,
+                    Selected = f.Selected,
+                    Model3DLink = f.Product.Model3DLink,
+                    Model2DLink = f.Product.Model2DLink,
+                    Note = f.Note,
+                    CustomizationJson = ""
+                })
+                .ToListAsync();
+
+            var combinedItems = cartItems.Concat(finishedItems).ToList();
+
+            int totalItems = combinedItems.Count();
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            var paginatedItems = combinedItems
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var startIndex = (page - 1) * pageSize + 1;
+            var endIndex = page * pageSize > totalItems ? totalItems : page * pageSize;
+
+            var model = new UnifiedCartViewModel
+            {
+                UserId = user.Id,
+                UserName = user.FullName,
+                Email = user.Email,
+                UserLocation = user.Location,
+                UserPhoneNumber = user.PhoneNumber,
+                Items = paginatedItems,
+                CurrentPage = page,
+                TotalPages = totalPages,
+                SearchFilter = search,
+                TotalCount = totalItems,
+                StartIndex = startIndex,
+                EndIndex = endIndex
+            };
+
+            return View(model);
+        }
+
+
 
         // [HttpPost]
         // [Route("Cart/DeleteItem/{id}")]

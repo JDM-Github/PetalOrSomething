@@ -332,15 +332,6 @@ namespace PetalOrSomething.Controllers
                     string checkoutUrl = responseData.data.attributes.checkout_url;
                     string referenceNumber = responseData.data.attributes.reference_number;
 
-
-
-                    // Update Cart (You can fetch cart details based on userId and remove the ordered product)
-                    // Assuming you have some method to update your cart here
-
-                    // Optionally, store the order in the database with the reference number and order details
-                    // SaveOrder(userId, referenceNumber, productId, quantity);
-
-                    // Redirect to PayMongo checkout page
                     return Redirect(checkoutUrl);
                 }
                 else
@@ -386,7 +377,7 @@ namespace PetalOrSomething.Controllers
             _context.SaveChanges();
 
             TempData["SuccessMessage"] = "Product added to cart successfully!";
-            return RedirectToAction("CartFinished", "Cart");
+            return RedirectToAction("Cart", "Cart");
         }
 
 
@@ -450,7 +441,7 @@ namespace PetalOrSomething.Controllers
                 return RedirectToAction("ProductEdit");
             }
 
-            return RedirectToAction("CartItem", "Cart");
+            return RedirectToAction("Cart", "Cart");
         }
 
         public async Task<IActionResult> CreateOrUpdateAccount(string firstName, string middleName, string lastName, string email, string phoneNumber, string location)
@@ -557,7 +548,7 @@ namespace PetalOrSomething.Controllers
                 return RedirectToAction("ProductEdit");
             }
 
-            return RedirectToAction("CartItem", "Cart");
+            return RedirectToAction("Cart", "Cart");
         }
 
         // [HttpPost]

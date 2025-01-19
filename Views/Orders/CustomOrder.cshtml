@@ -236,6 +236,7 @@
                                         <thead class="table-secondary text-nowrap" style="color:#221E2C66 !important">
                                             <tr>
                                                 <th scope="col">PRODUCT NAME</th>
+                                                <th scope="col">2D MODEL</th>
                                                 <th scope="col">3D MODEL</th>
                                                 <th scope="col">QUANTITY</th>
                                                 <th scope="col">PRICE</th>
@@ -245,7 +246,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach (var product in order.Products)
+                                            @* @foreach (var product in order.Products)
                                             {
                                                 <tr>
                                                     <td>@product.ProductName</td>
@@ -275,6 +276,110 @@
                                                             <a href="@Url.Action("View3D", "Admin", new { modelUrl = product.Model3DLink, note = product.Note, customization = product.CustomizationJson })"
                                                                 type="submit" class="btn btn-outline-success">View</a>
                                                         </div>
+                                                    </td>
+                                                </tr>
+                                            } *@
+
+                                            @* @foreach (var product in order.FinishedProducts)
+                                            {
+                                                <tr>
+                                                    <td>@product.Product.Name</td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(product.Product.Model2DLink))
+                                                        {
+                                                            <img src="@product.Product.Model2DLink" alt="@product.Product.Name"
+                                                                class="img-thumbnail" style="max-width: 100px; height: auto;" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">No 2D Model</span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(product.Product.Model3DLink))
+                                                        {
+                                                            <model-viewer src="@product.Product.Model3DLink"
+                                                                style="width: auto; height: 100px;" camera-controls auto-rotate ar
+                                                                alt="3D Model of @product.Product.Name"></model-viewer>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">No 3D Model</span>
+                                                        }
+                                                    </td>
+                                                    <td>@product.Quantity</td>
+                                                    <td>@product.Product.Price.ToString("C")</td>
+                                                    <td>@((product.TotalPrice).ToString("C"))</td>
+                                                    <td style="max-width: 200px;">
+                                                        <div style="max-height: 100px; overflow-y:
+                                                        auto; word-wrap: break-word;">
+                                                            @product.Note
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            } *@
+
+                                            @foreach (var product in order.Products.Select(p => new 
+                                            {
+                                                Name = p.ProductName,
+                                                Model2DLink = "",
+                                                Model3DLink = p.Model3DLink,
+                                                Quantity = p.Quantity,
+                                                Price = p.TotalPrice,
+                                                Total = p.TotalPrice * p.Quantity,
+                                                Note = p.Note,
+                                                ViewAction = Url.Action("View3D", "Admin", new { modelUrl = p.Model3DLink, note = p.Note, customization = p.CustomizationJson })
+                                            })
+                                            .Concat(order.FinishedProducts.Select(fp => new 
+                                            {
+                                                Name = fp.Product.Name,
+                                                Model2DLink = fp.Product.Model2DLink,
+                                                Model3DLink = fp.Product.Model3DLink,
+                                                Quantity = fp.Quantity,
+                                                Price = fp.Product.Price,
+                                                Total = fp.TotalPrice,
+                                                Note = fp.Note,
+                                                ViewAction = (string)(null)
+                                            })))
+                                            {
+                                                <tr>
+                                                    <td>@product.Name</td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(product.Model2DLink))
+                                                        {
+                                                            <img src="@product.Model2DLink" alt="@product.Name" class="img-thumbnail" style="max-width: 100px; height: auto;" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">No 2D Model</span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(product.Model3DLink))
+                                                        {
+                                                            <model-viewer src="@product.Model3DLink" style="width: auto; height: 100px;" camera-controls auto-rotate ar
+                                                                alt="3D Model of @product.Name"></model-viewer>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">No 3D Model</span>
+                                                        }
+                                                    </td>
+                                                    <td>@product.Quantity</td>
+                                                    <td>@product.Price.ToString("C")</td>
+                                                    <td>@product.Total.ToString("C")</td>
+                                                    <td style="max-width: 200px;">
+                                                        <div style="max-height: 100px; overflow-y: auto; word-wrap: break-word;">
+                                                            @product.Note
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        @if (!string.IsNullOrEmpty(product.ViewAction))
+                                                        {
+                                                            <div class="d-flex flex-column">
+                                                                <a href="@product.ViewAction" type="submit" class="btn btn-outline-success">View</a>
+                                                            </div>
+                                                        }
                                                     </td>
                                                 </tr>
                                             }

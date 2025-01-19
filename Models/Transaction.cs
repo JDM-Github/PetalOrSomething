@@ -13,6 +13,7 @@ namespace PetalOrSomething.Models
         public string OrderId { get; set; }
 
         public List<CartItem> Products { get; set; }
+        public List<CartFinished> FinishedProducts { get; set; }
 
         public string ReferenceNumber { get; set; }
         public string TransactionId { get; set; }

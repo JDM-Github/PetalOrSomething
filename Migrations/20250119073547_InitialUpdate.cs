@@ -188,6 +188,7 @@ namespace PetalOrSomething.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
+                    OrderId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ReferenceNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     TransactionId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PaymentLink = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -442,6 +443,7 @@ namespace PetalOrSomething.Migrations
                     Selected = table.Column<bool>(type: "bit", nullable: false),
                     IsOrdered = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TransactionCustomOrderId = table.Column<int>(type: "int", nullable: true),
                     TransactionOrderId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -453,6 +455,11 @@ namespace PetalOrSomething.Migrations
                         principalTable: "FlowerInventories",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_CartFinishedItems_TransactionCustomOrders_TransactionCustomOrderId",
+                        column: x => x.TransactionCustomOrderId,
+                        principalTable: "TransactionCustomOrders",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_CartFinishedItems_TransactionOrders_TransactionOrderId",
                         column: x => x.TransactionOrderId,
@@ -509,6 +516,11 @@ namespace PetalOrSomething.Migrations
                 name: "IX_CartFinishedItems_ProductId",
                 table: "CartFinishedItems",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CartFinishedItems_TransactionCustomOrderId",
+                table: "CartFinishedItems",
+                column: "TransactionCustomOrderId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CartFinishedItems_TransactionOrderId",

@@ -29,9 +29,9 @@ namespace PetalOrSomething.Controllers
                 .Include(f => f.Stocks)
                 .ToList();
 
-            var transactionOrders = _context.TransactionOrders
+            var transactionOrders = _context.TransactionCustomOrders
                 .Where(t => t.Status == "Paid")
-                .Include(t => t.Products)
+                .Include(t => t.FinishedProducts)
                 .ThenInclude(p => p.Product)
                 .ToList();
 
@@ -51,7 +51,7 @@ namespace PetalOrSomething.Controllers
             var notExpiredPercentage = 100 - expiredPercentage;
 
             var mostPopularProducts = transactionOrders
-                .SelectMany(t => t.Products)
+                .SelectMany(t => t.FinishedProducts)
                 .GroupBy(p => p.Product)
                 .Select(g => new
                 {
@@ -100,7 +100,10 @@ namespace PetalOrSomething.Controllers
             return View(model);
         }
 
-
+        public IActionResult AddProduct(string productName, string modelUrl)
+        {
+            return RedirectToAction("Create", "Inventory", new { productName, modelUrl });
+        }
 
     }
 }

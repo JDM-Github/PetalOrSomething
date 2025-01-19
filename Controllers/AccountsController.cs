@@ -98,11 +98,17 @@ namespace PetalOrSomething.Controllers
                 _context.Add(account);
                 await _context.SaveChangesAsync();
 
+                var random = new Random();
+                account.VerificationCode = string.Join("", Enumerable.Range(0, 6).Select(_ => random.Next(0, 10)));
+
+                _context.Update(account);
+                await _context.SaveChangesAsync();
+
                 await _emailService.SendEmailAsync(account.Email, "Sent Verification Code",
                     $"Your verification code is: {account.VerificationCode}");
 
                 TempData["SuccessMessage"] = "Account successfully created.";
-                TempData["Email"] = account.Email;
+                ViewBag.Email = account.Email;
                 return RedirectToAction("Verify", "Accounts");
             }
             TempData["ErrorMessage"] = "Invalid input. Please check your entries.";
@@ -209,7 +215,14 @@ namespace PetalOrSomething.Controllers
             var account = await _context.Account.FirstOrDefaultAsync(a => a.Email == Email);
             if (account == null)
             {
-                return BadRequest("Account not found.");
+                TempData["ErrorMessage"] = "Email not found.";
+                return RedirectToAction("Verify", "Accounts");
+            }
+
+            if (account.VerificationCode != VerificationCode)
+            {
+                TempData["ErrorMessage"] = "Invalid verification code.";
+                return RedirectToAction("Verify", "Accounts");
             }
 
             account.IsVerified = true;
@@ -242,9 +255,14 @@ namespace PetalOrSomething.Controllers
                 return RedirectToAction("Verify");
             }
 
-            string verificationCode = "123456";
+            var random = new Random();
+            account.VerificationCode = string.Join("", Enumerable.Range(0, 6).Select(_ => random.Next(0, 10)));
+
+            _context.Update(account);
+            await _context.SaveChangesAsync();
+
             await _emailService.SendEmailAsync(account.Email, "Resend Verification Code",
-                $"Your verification code is: {verificationCode}");
+                $"Your verification code is: {account.VerificationCode}");
 
             TempData["SuccessMessage"] = "Verification code has been resent.";
             TempData["Email"] = account.Email;

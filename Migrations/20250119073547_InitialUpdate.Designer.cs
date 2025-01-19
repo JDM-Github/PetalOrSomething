@@ -12,7 +12,7 @@ using PetalOrSomething.Data;
 namespace PetalOrSomething.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250111192521_InitialUpdate")]
+    [Migration("20250119073547_InitialUpdate")]
     partial class InitialUpdate
     {
         /// <inheritdoc />
@@ -336,6 +336,9 @@ namespace PetalOrSomething.Migrations
                     b.Property<bool>("Selected")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("TransactionCustomOrderId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("TransactionOrderId")
                         .HasColumnType("int");
 
@@ -345,6 +348,8 @@ namespace PetalOrSomething.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("TransactionCustomOrderId");
 
                     b.HasIndex("TransactionOrderId");
 
@@ -669,6 +674,10 @@ namespace PetalOrSomething.Migrations
                     b.Property<bool>("IsFeedback")
                         .HasColumnType("bit");
 
+                    b.Property<string>("OrderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("OrderStatus")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -844,6 +853,10 @@ namespace PetalOrSomething.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("PetalOrSomething.Models.TransactionCustomOrder", null)
+                        .WithMany("FinishedProducts")
+                        .HasForeignKey("TransactionCustomOrderId");
+
                     b.HasOne("PetalOrSomething.Models.TransactionOrder", null)
                         .WithMany("Products")
                         .HasForeignKey("TransactionOrderId");
@@ -903,6 +916,8 @@ namespace PetalOrSomething.Migrations
 
             modelBuilder.Entity("PetalOrSomething.Models.TransactionCustomOrder", b =>
                 {
+                    b.Navigation("FinishedProducts");
+
                     b.Navigation("Products");
                 });
 
